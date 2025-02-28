@@ -109,7 +109,7 @@ void TaskSelectHyperplanePointsESH::run(std::vector<SolutionPoint> solPoints)
 
         if(addedHyperplanes >= maxHyperplanesPerIter)
         {
-            env->output->outputDebug("        Not generating hyperplane using ESH: Max number already added.");         
+            env->output->outputDebug("        Not generating hyperplane using ESH: Max number already added.");
             env->timing->stopTimer("DualCutGenerationRootSearch");
             break;
         }
@@ -138,7 +138,6 @@ void TaskSelectHyperplanePointsESH::run(std::vector<SolutionPoint> solPoints)
 
                     env->output->outputDebug("        Not generating hyperplane using ESH: Numerical error.");
                     continue;
-
                 }
 
                 if(numericConstraintValuesConvex.size() > 0)
@@ -159,10 +158,11 @@ void TaskSelectHyperplanePointsESH::run(std::vector<SolutionPoint> solPoints)
                     // Do not add hyperplane if one has been added for this constraint already
                     if(useUniqueConstraints && hyperplaneAddedToConstraint.at(NCV.constraint->index))
                     {
-                        env->output->outputDebug("        Not generating hyperplane using ESH: Hyperplane generated for constraint already.");
+                        env->output->outputDebug("        Not generating hyperplane using ESH: Hyperplane generated "
+                                                 "for constraint already.");
                         continue;
                     }
-                  
+
                     // Do not add hyperplane if there are numerical errors
                     if(std::isnan(NCV.error) || std::isnan(NCV.normalizedValue))
                     {
@@ -174,7 +174,7 @@ void TaskSelectHyperplanePointsESH::run(std::vector<SolutionPoint> solPoints)
                     if(NCV.normalizedValue < rootsearchConstraintTolerance)
                     {
                         env->output->outputDebug(
-                             "        Not generating hyperplane using ESH: Rootsearch tolerance reached.");
+                            "        Not generating hyperplane using ESH: Rootsearch tolerance reached.");
                         continue;
                     }
 
@@ -182,7 +182,7 @@ void TaskSelectHyperplanePointsESH::run(std::vector<SolutionPoint> solPoints)
                     if(NCV.error < constraintMaxSelectionFactor * numericConstraintValues.at(0).error)
                     {
                         env->output->outputDebug(
-                            "        Not generating hyperplane using ESH: Constraint value much smaller than largest.");          
+                            "        Not generating hyperplane using ESH: Constraint value much smaller than largest.");
                         continue;
                     }
 
@@ -649,11 +649,11 @@ void TaskSelectHyperplanePointsESH::run(std::vector<SolutionPoint> solPoints)
             }
 
             env->dualSolver->addHyperplane(HP.first);
-            hyperplaneAddedToConstraint.at(HP.first.sourceConstraint->index) = true;
+            hyperplaneAddedToConstraint.at(HP.first.sourceConstraintIndex) = true;
             addedHyperplanes++;
             env->output->outputDebug(fmt::format("         Selected hyperplane cut for constraint {} that cuts away "
                                                  "previous primal solution with error {}",
-                HP.first.sourceConstraint->index, HP.second));
+                HP.first.sourceConstraintIndex, HP.second));
 
             addedHyperplanes++;
 

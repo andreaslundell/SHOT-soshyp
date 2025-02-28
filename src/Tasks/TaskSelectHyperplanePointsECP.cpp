@@ -228,11 +228,11 @@ void TaskSelectHyperplanePointsECP::run(std::vector<SolutionPoint> solPoints)
         for(auto& HP : hyperplanesCuttingAwayPrimals)
         {
             env->dualSolver->addHyperplane(HP.first);
-            hyperplaneAddedToConstraint.at(HP.first.sourceConstraint->index) = true;
+            hyperplaneAddedToConstraint.at(HP.first.sourceConstraintIndex) = true;
             addedHyperplanes++;
             env->output->outputDebug(fmt::format("         Selected hyperplane cut for constraint {} that cuts away "
                                                  "previous primal solution with error {}",
-                HP.first.sourceConstraint->index, HP.second));
+                HP.first.sourceConstraintIndex, HP.second));
 
             addedHyperplanes++;
 

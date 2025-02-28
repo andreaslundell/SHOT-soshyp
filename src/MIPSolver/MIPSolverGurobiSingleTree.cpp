@@ -497,7 +497,7 @@ bool GurobiCallbackSingleTree::createHyperplane(Hyperplane hyperplane)
             if(E.second != E.second) // Check for NaN
             {
                 env->output->outputError("        Warning: hyperplane for constraint "
-                    + std::to_string(hyperplane.sourceConstraint->index)
+                    + std::to_string(hyperplane.sourceConstraintIndex)
                     + " not generated, NaN found in linear terms for variable "
                     + env->problem->getVariable(E.first)->name);
                 return (false);

@@ -140,7 +140,7 @@ void DualSolver::addHyperplane(Hyperplane& hyperplane)
            && !hasHyperplaneBeenAdded(hyperplane.pointHash, -1))
         || (hyperplane.source != E_HyperplaneSource::ObjectiveRootsearch
             && hyperplane.source != E_HyperplaneSource::ObjectiveCuttingPlane
-            && (!hasHyperplaneBeenAdded(hyperplane.pointHash, hyperplane.sourceConstraint->index))))
+            && (!hasHyperplaneBeenAdded(hyperplane.pointHash, hyperplane.sourceConstraintIndex))))
     {
         this->hyperplaneWaitingList.push_back(hyperplane);
     }
@@ -199,23 +199,27 @@ void DualSolver::addGeneratedHyperplane(const Hyperplane& hyperplane)
 
     GeneratedHyperplane genHyperplane;
 
-    genHyperplane.source = hyperplane.source;
-    if(hyperplane.sourceConstraint)
+    if(hyperplane.isObjectiveHyperplane)
     {
-        genHyperplane.sourceConstraint = hyperplane.sourceConstraint;
-        genHyperplane.sourceConstraintIndex = hyperplane.sourceConstraint->index;
+        genHyperplane.objectiveFunctionValue = hyperplane.objectiveFunctionValue;
     }
     else
-        genHyperplane.sourceConstraintIndex = -1;
+    {
+        assert(hyperplane.sourceConstraint);
+        genHyperplane.sourceConstraint = hyperplane.sourceConstraint;
+    }
 
-    genHyperplane.iterationGenerated = env->results->getCurrentIteration()->iterationNumber;
-    genHyperplane.isLazy = false;
+    genHyperplane.sourceConstraintIndex = hyperplane.sourceConstraintIndex;
+    genHyperplane.generatedPoint = hyperplane.generatedPoint;
+
+    genHyperplane.source = hyperplane.source;
+    genHyperplane.isObjectiveHyperplane = hyperplane.isObjectiveHyperplane;
+    genHyperplane.isSourceConvex = hyperplane.isSourceConvex;
     genHyperplane.pointHash = hyperplane.pointHash;
 
-    if(env->settings->getSetting<bool>("HyperplaneCuts.SaveHyperplanePoints", "Dual"))
-        genHyperplane.generatedPoint = hyperplane.generatedPoint;
-
-    genHyperplane.isSourceConvex = hyperplane.isSourceConvex;
+    genHyperplane.isLazy = false;
+    genHyperplane.isRemoved = false;
+    genHyperplane.iterationGenerated = env->results->getCurrentIteration()->iterationNumber;
 
     if(!genHyperplane.isSourceConvex)
     {
@@ -240,7 +244,7 @@ void DualSolver::addGeneratedHyperplane(const Hyperplane& hyperplane)
     if(hyperplane.sourceConstraint)
     {
         env->output->outputTrace(fmt::format("        Added hyperplane with hash {} to constraint {}",
-            genHyperplane.pointHash, genHyperplane.sourceConstraint->index));
+            genHyperplane.pointHash, genHyperplane.sourceConstraintIndex));
     }
 
     generatedHyperplanes.push_back(genHyperplane);
@@ -274,7 +278,7 @@ bool DualSolver::hasHyperplaneBeenAdded(double hash, int constraintIndex)
             return (true);
         }
         else if(H.source != E_HyperplaneSource::ObjectiveRootsearch
-            && H.source != E_HyperplaneSource::ObjectiveCuttingPlane && H.sourceConstraint->index == constraintIndex
+            && H.source != E_HyperplaneSource::ObjectiveCuttingPlane && H.sourceConstraintIndex == constraintIndex
             && Utilities::isAlmostEqual(H.pointHash, hash, 1e-8))
         {
             return (true);

@@ -783,7 +783,8 @@ void Solver::initializeSettings()
     env->settings->createSetting("HyperplaneCuts.UseIntegerCuts", "Dual", false,
         "Add integer cuts for infeasible integer-combinations for binary problems");
 
-    env->settings->createSetting("HyperplaneCuts.SaveHyperplanePoints", "Dual", false,
+    // TODO: fix this based on bounding
+    env->settings->createSetting("HyperplaneCuts.SaveHyperplanePoints", "Dual", true,
         "Whether to save the points in the generated hyperplanes list", false);
 
     VectorString enumObjectiveRootsearch;
@@ -1965,7 +1966,7 @@ void Solver::setConvexityBasedSettings()
             env->settings->updateSetting("BoundTightening.FeasibilityBased.TimeLimit", "Model", 5.0);
 
             // Need to save these to perform dual bound updates
-            // env->settings->updateSetting("HyperplaneCuts.SaveHyperplanePoints", "Dual", true);
+            env->settings->updateSetting("HyperplaneCuts.SaveHyperplanePoints", "Dual", true);
 
 #ifdef HAS_CPLEX
 
