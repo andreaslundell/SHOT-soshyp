@@ -187,7 +187,7 @@ void TaskPerformConvexBounding::run()
     {
         double objectiveValue = MIPSolver->getObjectiveValue();
 
-        DualSolution sol = { solutionPoints.at(0).point, E_DualSolutionSource::ConvexBounding, objectiveValue,
+        DualSolution sol = { solutionPoints.at(0).point, E_DualSolutionSource::ConvexBounding, objectiveBound,
             iterationNumber, false };
 
         env->dualSolver->addDualSolutionCandidate(sol);
