@@ -16,6 +16,11 @@
 
 #include "TaskCreateMIPProblem.h"
 
+#include "TaskSelectHyperplanePointsObjectiveFunction.h"
+#include "TaskSelectHyperplanePointsESH.h"
+#include "TaskSelectHyperplanePointsECP.h"
+#include "TaskUpdateInteriorPoint.h"
+
 namespace SHOT
 {
 
@@ -33,5 +38,9 @@ private:
     int lastNumberOfHyperplanesWithConvexSource = 0;
     int lastNumberOfHyperplanesWithNonconvexSource = 0;
     int idleIterations = 0;
+
+    std::shared_ptr<TaskBase> taskSelectHPPts;
+    std::shared_ptr<TaskSelectHyperplanePointsObjectiveFunction> taskSelectHPPtsByObjectiveRootsearch;
+    std::shared_ptr<TaskUpdateInteriorPoint> tUpdateInteriorPoint;
 };
 } // namespace SHOT

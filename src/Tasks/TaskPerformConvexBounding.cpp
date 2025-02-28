@@ -40,7 +40,31 @@
 namespace SHOT
 {
 
-TaskPerformConvexBounding::TaskPerformConvexBounding(EnvironmentPtr envPtr) : TaskBase(envPtr) { }
+TaskPerformConvexBounding::TaskPerformConvexBounding(EnvironmentPtr envPtr) : TaskBase(envPtr)
+{
+    if(env->reformulatedProblem->properties.numberOfNonlinearConstraints > 0)
+    {
+        if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
+            == ES_HyperplaneCutStrategy::ESH)
+        {
+            tUpdateInteriorPoint = std::make_shared<TaskUpdateInteriorPoint>(env);
+            taskSelectHPPts = std::make_shared<TaskSelectHyperplanePointsESH>(env);
+        }
+        else
+        {
+            taskSelectHPPts = std::make_shared<TaskSelectHyperplanePointsECP>(env);
+        }
+    }
+
+    auto NLPProblemSource = static_cast<ES_PrimalNLPProblemSource>(
+        env->settings->getSetting<int>("FixedInteger.SourceProblem", "Primal"));
+
+    if(env->reformulatedProblem->objectiveFunction->properties.classification
+        > E_ObjectiveFunctionClassification::Quadratic)
+    {
+        taskSelectHPPtsByObjectiveRootsearch = std::make_shared<TaskSelectHyperplanePointsObjectiveFunction>(env);
+    }
+}
 
 TaskPerformConvexBounding::~TaskPerformConvexBounding() = default;
 
@@ -80,7 +104,7 @@ void TaskPerformConvexBounding::run()
     lastNumberOfHyperplanesWithConvexSource = env->solutionStatistics.numberOfHyperplanesWithConvexSource;
     lastNumberOfHyperplanesWithNonconvexSource = env->solutionStatistics.numberOfHyperplanesWithNonconvexSource;
 
-    env->output->outputInfo("        Creating convex bounding problem");
+    env->output->outputInfo("        Convex bounding started");
 
     MIPSolverPtr MIPSolver;
 
@@ -148,15 +172,15 @@ void TaskPerformConvexBounding::run()
 
     MIPSolver->setSolutionLimit(2100000000);
 
-    env->output->outputInfo(fmt::format("         Convex bounding problem created. Number of hyperplanes added: {}/{}",
+    env->output->outputInfo(fmt::format("         Problem created. Number of hyperplanes added: {}/{}",
         numberHyperplanesAdded, env->dualSolver->generatedHyperplanes.size()));
     auto solutionStatus = MIPSolver->solveProblem();
 
     auto solutionPoints = MIPSolver->getAllVariableSolutions();
     double objectiveBound = MIPSolver->getDualObjectiveValue();
 
-    env->output->outputInfo(fmt::format("         Convex bounding problem solved with return code {} and objective "
-                                        "bound {}. Number of solutions in solution pool: {}",
+    env->output->outputInfo(fmt::format(
+        "         Problem solved with return code {} and objective bound {}. Number of solutions in solution pool: {}",
         (int)solutionStatus, objectiveBound, solutionPoints.size()));
 
     if(solutionPoints.size() > 0)
@@ -174,6 +198,39 @@ void TaskPerformConvexBounding::run()
                 SOL.point.at(env->reformulatedProblem->antiEpigraphObjectiveVariable->index) = objectiveValue;
         }
 
+        int hyperplanesBefore = env->solutionStatistics.numberOfHyperplanesWithConvexSource
+            + env->solutionStatistics.numberOfHyperplanesWithNonconvexSource;
+
+        if(env->reformulatedProblem->properties.numberOfNonlinearConstraints > 0)
+        {
+            if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
+                == ES_HyperplaneCutStrategy::ESH)
+            {
+                tUpdateInteriorPoint->run();
+                static_cast<TaskSelectHyperplanePointsESH*>(taskSelectHPPts.get())->run(solutionPoints);
+            }
+            else
+            {
+                static_cast<TaskSelectHyperplanePointsECP*>(taskSelectHPPts.get())->run(solutionPoints);
+            }
+        }
+
+        if(env->reformulatedProblem->objectiveFunction->properties.classification
+            > E_ObjectiveFunctionClassification::Quadratic)
+        {
+            taskSelectHPPtsByObjectiveRootsearch->run(solutionPoints);
+        }
+
+        int hyperplanesAfter = env->solutionStatistics.numberOfHyperplanesWithConvexSource
+            + env->solutionStatistics.numberOfHyperplanesWithNonconvexSource;
+
+        if(hyperplanesAfter > hyperplanesBefore)
+        {
+            env->output->outputInfo(
+                fmt::format("         Added {} hyperplanes generated from convex bounding to the dual solver.",
+                    hyperplanesAfter - hyperplanesBefore));
+        }
+
         env->primalSolver->addPrimalSolutionCandidates(solutionPoints, E_PrimalSolutionSource::ConvexBounding);
 
         for(auto& SOL : solutionPoints)
@@ -187,9 +244,9 @@ void TaskPerformConvexBounding::run()
     }
 
     if(currDual != env->results->getGlobalDualBound())
-        env->output->outputInfo(fmt::format(
-            " Convex bounding returned new global dual bound {}. Old bound was {}. Absolute improvement: {}",
-            env->results->getGlobalDualBound(), currDual, std::abs(currDual - env->results->getGlobalDualBound())));
+        env->output->outputInfo(
+            fmt::format("         New global dual bound {}. Old bound was {}. Absolute improvement: {}",
+                env->results->getGlobalDualBound(), currDual, std::abs(currDual - env->results->getGlobalDualBound())));
 
     env->output->outputInfo("        Convex bounding finished.");
 }

@@ -115,14 +115,7 @@ void DualSolver::checkDualSolutionCandidates()
                 break;
             }
 
-            if(C.sourceType == E_DualSolutionSource::ConvexBounding)
-            {
-                env->output->outputInfo(fmt::format("        New dual bound {}, source: {}", C.objValue, sourceDesc));
-            }
-            else
-            {
-                env->output->outputDebug(fmt::format("        New dual bound {}, source: {}", C.objValue, sourceDesc));
-            }
+            env->output->outputDebug(fmt::format("        New dual bound {}, source: {}", C.objValue, sourceDesc));
         }
     }
 
