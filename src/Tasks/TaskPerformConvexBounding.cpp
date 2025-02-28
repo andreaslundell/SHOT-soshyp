@@ -80,7 +80,7 @@ void TaskPerformConvexBounding::run()
     lastNumberOfHyperplanesWithConvexSource = env->solutionStatistics.numberOfHyperplanesWithConvexSource;
     lastNumberOfHyperplanesWithNonconvexSource = env->solutionStatistics.numberOfHyperplanesWithNonconvexSource;
 
-    env->output->outputInfo(" Performing convex bounding.");
+    env->output->outputInfo("        Performing convex bounding.");
 
     MIPSolverPtr MIPSolver;
 
@@ -108,9 +108,9 @@ void TaskPerformConvexBounding::run()
     assert(MIPSolver);
 
     if(!MIPSolver->initializeProblem())
-        throw Exception(" Cannot initialize selected MIP solver.");
+        throw Exception("         Cannot initialize selected MIP solver.");
 
-    env->output->outputInfo("  Creating convex bounding problem");
+    env->output->outputInfo("         Creating convex bounding problem");
 
     taskCreateMIPProblem = std::make_shared<TaskCreateMIPProblem>(env, MIPSolver, env->reformulatedProblem);
     taskCreateMIPProblem->run();
@@ -121,16 +121,12 @@ void TaskPerformConvexBounding::run()
     {
         if(HP.isSourceConvex)
         {
-            env->output->outputInfo("Convex hyperplane added to convex bounding problem");
             if(MIPSolver->createHyperplane((Hyperplane)HP))
                 numberHyperplanesAdded++;
         }
     }
 
     double currDual = env->results->getGlobalDualBound();
-
-    env->output->outputInfo(fmt::format(
-        "   Number of hyperplanes added: {}/{}", numberHyperplanesAdded, env->dualSolver->generatedHyperplanes.size()));
 
     int iterationNumber = env->results->getCurrentIteration()->iterationNumber;
 
@@ -154,21 +150,19 @@ void TaskPerformConvexBounding::run()
 
     MIPSolver->setSolutionLimit(2100000000);
 
-    env->output->outputInfo("  Convex bounding problem created");
+    env->output->outputInfo(fmt::format("         Convex bounding problem created. Number of hyperplanes added: {}/{}",
+        numberHyperplanesAdded, env->dualSolver->generatedHyperplanes.size()));
     auto solutionStatus = MIPSolver->solveProblem();
-
-    env->output->outputInfo(
-        fmt::format("        Convex bounding problem solved with return code: {}", (int)solutionStatus));
 
     auto solutionPoints = MIPSolver->getAllVariableSolutions();
     double objectiveBound = MIPSolver->getDualObjectiveValue();
-    env->output->outputInfo(fmt::format("        Convex bounding problem objective bound: {}", objectiveBound));
+
+    env->output->outputInfo(fmt::format("         Convex bounding problem solved with return code {} and objective "
+                                        "bound {}. Number of solutions in solution pool: {}",
+        (int)solutionStatus, objectiveBound, solutionPoints.size()));
 
     if(solutionPoints.size() > 0)
     {
-        env->output->outputInfo(
-            fmt::format("        Number of solutions in solution pool: {} ", solutionPoints.size()));
-
         double objectiveValue = MIPSolver->getObjectiveValue();
 
         DualSolution sol = { solutionPoints.at(0).point, E_DualSolutionSource::ConvexBounding, objectiveValue,
@@ -195,9 +189,11 @@ void TaskPerformConvexBounding::run()
     }
 
     if(currDual != env->results->getGlobalDualBound())
-        env->output->outputInfo(" Convex bounding returned new global bound.");
+        env->output->outputInfo(fmt::format(
+            " Convex bounding returned new global dual bound {}. Old bound was {}. Absolute improvement: {}",
+            env->results->getGlobalDualBound(), currDual, std::abs(currDual - env->results->getGlobalDualBound())));
 
-    env->output->outputInfo(" Convex bounding finished.");
+    env->output->outputInfo("        Convex bounding finished.");
 }
 
 std::string TaskPerformConvexBounding::getType()
