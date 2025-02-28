@@ -80,7 +80,7 @@ void TaskPerformConvexBounding::run()
     lastNumberOfHyperplanesWithConvexSource = env->solutionStatistics.numberOfHyperplanesWithConvexSource;
     lastNumberOfHyperplanesWithNonconvexSource = env->solutionStatistics.numberOfHyperplanesWithNonconvexSource;
 
-    env->output->outputInfo("        Performing convex bounding.");
+    env->output->outputInfo("        Creating convex bounding problem");
 
     MIPSolverPtr MIPSolver;
 
@@ -109,8 +109,6 @@ void TaskPerformConvexBounding::run()
 
     if(!MIPSolver->initializeProblem())
         throw Exception("         Cannot initialize selected MIP solver.");
-
-    env->output->outputInfo("         Creating convex bounding problem");
 
     taskCreateMIPProblem = std::make_shared<TaskCreateMIPProblem>(env, MIPSolver, env->reformulatedProblem);
     taskCreateMIPProblem->run();
