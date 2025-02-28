@@ -271,6 +271,8 @@ struct SolutionStatistics
     int numberOfPrimalImprovementsAfterInfeasibilityRepair = 0;
     int numberOfPrimalImprovementsAfterReductionCut = 0;
 
+    int numberOfDualImprovementsAfterConvexBounding = 0;
+
     bool hasInfeasibilityRepairBeenPerformedSincePrimalImprovement = false;
     bool hasReductionCutBeenAddedSincePrimalImprovement = false;
 

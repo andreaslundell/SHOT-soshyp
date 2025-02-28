@@ -438,7 +438,7 @@ std::string Results::getResultsOSrL()
     otherNode->SetAttribute("name", "numberOfPrimalImprovementsAfterInfeasibilityRepair");
     otherNode->SetAttribute("value", env->solutionStatistics.numberOfPrimalImprovementsAfterInfeasibilityRepair);
     otherNode->SetAttribute("description",
-        "The number of cases where the repairing of infeasibilities for nonconvex problems has directly resulted in "
+        "The number of times where the repairing of infeasibilities for nonconvex problems has directly resulted in "
         "improved primal solutions");
     otherResultsNode->InsertEndChild(otherNode);
 
@@ -446,7 +446,14 @@ std::string Results::getResultsOSrL()
     otherNode->SetAttribute("name", "numberOfPrimalImprovementsAfterReductionCut");
     otherNode->SetAttribute("value", env->solutionStatistics.numberOfPrimalImprovementsAfterReductionCut);
     otherNode->SetAttribute("description",
-        "The number of cases where the primal reduction cut has directly resulted in improved primal solutions");
+        "The number of times where the primal reduction cut has directly resulted in improved primal solutions");
+    otherResultsNode->InsertEndChild(otherNode);
+
+    otherNode = osrlDocument.NewElement("other");
+    otherNode->SetAttribute("name", "numberOfDualImprovementsAfterConvexBounding");
+    otherNode->SetAttribute("value", env->solutionStatistics.numberOfDualImprovementsAfterConvexBounding);
+    otherNode->SetAttribute("description",
+        "The number of times where the convex bounding strategy has directly resulted in an improved dual bound");
     otherResultsNode->InsertEndChild(otherNode);
 
     auto dualSolver = static_cast<ES_MIPSolver>(env->settings->getSetting<int>("MIP.Solver", "Dual"));

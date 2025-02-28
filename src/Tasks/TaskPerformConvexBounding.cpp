@@ -298,9 +298,14 @@ void TaskPerformConvexBounding::run()
     }
 
     if(currDual != env->results->getGlobalDualBound())
+    {
         env->output->outputInfo(
             fmt::format("         New global dual bound {}. Old bound was {}. Absolute improvement: {}",
                 env->results->getGlobalDualBound(), currDual, std::abs(currDual - env->results->getGlobalDualBound())));
+
+        env->solutionStatistics.numberOfDualImprovementsAfterConvexBounding++;
+        std::cout << env->solutionStatistics.numberOfDualImprovementsAfterConvexBounding << std::endl;
+    }
 
     env->output->outputInfo("        Convex bounding finished.");
 
