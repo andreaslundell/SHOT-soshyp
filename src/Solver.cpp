@@ -72,6 +72,7 @@ Solver::Solver()
     env->timing->createTimer("BoundTighteningPOA", "  - initial outer approximation");
     env->timing->createTimer("BoundTighteningFBBTOriginal", "  - feasibility based (original problem)");
     env->timing->createTimer("BoundTighteningFBBTReformulated", "  - feasibility based (reformulated problem)");
+    env->timing->createTimer("ConvexBounding", "- convex bounding");
 
     env->settings = std::make_shared<Settings>(env->output);
     env->tasks = std::make_shared<TaskHandler>(env);
@@ -103,6 +104,7 @@ Solver::Solver(std::shared_ptr<spdlog::sinks::sink> consoleSink)
     env->timing->createTimer("BoundTighteningFBBT", "  - feasibility based");
     env->timing->createTimer("BoundTighteningFBBTOriginal", "  - feasibility based (original problem");
     env->timing->createTimer("BoundTighteningFBBTReformulated", "  - feasibility based (reformulated problem");
+    env->timing->createTimer("ConvexBounding", "- convex bounding");
 
     env->settings = std::make_shared<Settings>(env->output);
     env->tasks = std::make_shared<TaskHandler>(env);

@@ -42,6 +42,8 @@ namespace SHOT
 
 TaskPerformConvexBounding::TaskPerformConvexBounding(EnvironmentPtr envPtr) : TaskBase(envPtr)
 {
+    env->timing->startTimer("ConvexBounding");
+
     if(env->reformulatedProblem->properties.numberOfNonlinearConstraints > 0)
     {
         if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
@@ -56,20 +58,21 @@ TaskPerformConvexBounding::TaskPerformConvexBounding(EnvironmentPtr envPtr) : Ta
         }
     }
 
-    auto NLPProblemSource = static_cast<ES_PrimalNLPProblemSource>(
-        env->settings->getSetting<int>("FixedInteger.SourceProblem", "Primal"));
-
     if(env->reformulatedProblem->objectiveFunction->properties.classification
         > E_ObjectiveFunctionClassification::Quadratic)
     {
         taskSelectHPPtsByObjectiveRootsearch = std::make_shared<TaskSelectHyperplanePointsObjectiveFunction>(env);
     }
+
+    env->timing->stopTimer("ConvexBounding");
 }
 
 TaskPerformConvexBounding::~TaskPerformConvexBounding() = default;
 
 void TaskPerformConvexBounding::run()
 {
+    env->timing->startTimer("ConvexBounding");
+
     /*
         if(env->solutionStatistics.numberOfHyperplanesWithConvexSource == 0)
         {
@@ -243,12 +246,65 @@ void TaskPerformConvexBounding::run()
         env->dualSolver->addDualSolutionCandidate(sol);
     }
 
+    // Update solution stats
+    if(env->reformulatedProblem->properties.isDiscrete && solutionStatus == E_ProblemSolutionStatus::Optimal)
+    {
+        if(env->reformulatedProblem->properties.isMIQPProblem)
+        {
+            env->solutionStatistics.numberOfBoundingProblemsOptimalMIQP++;
+        }
+        else if(env->reformulatedProblem->properties.isMIQCQPProblem)
+        {
+            env->solutionStatistics.numberOfBoundingProblemsOptimalMIQCQP++;
+        }
+        else
+        {
+            env->solutionStatistics.numberOfBoundingProblemsOptimalMILP++;
+        }
+    }
+    else if(!env->reformulatedProblem->properties.isDiscrete)
+    {
+        if(env->reformulatedProblem->properties.isMIQPProblem)
+        {
+            env->solutionStatistics.numberOfBoundingProblemsQP++;
+        }
+        else if(env->reformulatedProblem->properties.isMIQCQPProblem)
+        {
+            env->solutionStatistics.numberOfBoundingProblemsQCQP++;
+        }
+        else
+        {
+            env->solutionStatistics.numberOfBoundingProblemsLP++;
+        }
+    }
+    else if(env->reformulatedProblem->properties.isDiscrete
+        && (solutionStatus == E_ProblemSolutionStatus::SolutionLimit
+            || solutionStatus == E_ProblemSolutionStatus::TimeLimit
+            || solutionStatus == E_ProblemSolutionStatus::NodeLimit))
+    {
+
+        if(env->reformulatedProblem->properties.isMIQPProblem)
+        {
+            env->solutionStatistics.numberOfBoundingProblemsFeasibleMIQP++;
+        }
+        else if(env->reformulatedProblem->properties.isMIQCQPProblem)
+        {
+            env->solutionStatistics.numberOfBoundingProblemsFeasibleMIQCQP++;
+        }
+        else
+        {
+            env->solutionStatistics.numberOfBoundingProblemsFeasibleMILP++;
+        }
+    }
+
     if(currDual != env->results->getGlobalDualBound())
         env->output->outputInfo(
             fmt::format("         New global dual bound {}. Old bound was {}. Absolute improvement: {}",
                 env->results->getGlobalDualBound(), currDual, std::abs(currDual - env->results->getGlobalDualBound())));
 
     env->output->outputInfo("        Convex bounding finished.");
+
+    env->timing->stopTimer("ConvexBounding");
 }
 
 std::string TaskPerformConvexBounding::getType()

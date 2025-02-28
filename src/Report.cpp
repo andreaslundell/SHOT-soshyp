@@ -1178,6 +1178,53 @@ void Report::outputSolutionReport()
 
     env->output->outputInfo("");
 
+    env->output->outputInfo(fmt::format(" Convex bounding problems solved:                {}",
+        env->solutionStatistics.getNumberOfTotalBoundingProblems()));
+
+    if(env->solutionStatistics.numberOfBoundingProblemsLP > 0)
+    {
+        env->output->outputInfo(fmt::format(
+            "  - LP problems                                  {}", env->solutionStatistics.numberOfBoundingProblemsLP));
+    }
+
+    if(env->solutionStatistics.numberOfBoundingProblemsQP > 0)
+    {
+        env->output->outputInfo(fmt::format(
+            "  - QP problems                                  {}", env->solutionStatistics.numberOfBoundingProblemsQP));
+    }
+
+    if(env->solutionStatistics.numberOfBoundingProblemsQCQP > 0)
+    {
+        env->output->outputInfo(fmt::format("  - QCQP problems                                {}",
+            env->solutionStatistics.numberOfBoundingProblemsQCQP));
+    }
+
+    if(env->solutionStatistics.numberOfBoundingProblemsOptimalMILP > 0)
+    {
+        env->output->outputInfo(fmt::format("  - MILP problems, optimal                       {}",
+            env->solutionStatistics.numberOfBoundingProblemsOptimalMILP));
+    }
+
+    if(env->solutionStatistics.numberOfBoundingProblemsFeasibleMILP > 0)
+    {
+        env->output->outputInfo(fmt::format("  - MILP problems, feasible                      {}",
+            env->solutionStatistics.numberOfBoundingProblemsFeasibleMILP));
+    }
+
+    if(env->solutionStatistics.numberOfBoundingProblemsOptimalMIQP > 0)
+    {
+        env->output->outputInfo(fmt::format("  - MIQP problems, optimal                       {}",
+            env->solutionStatistics.numberOfBoundingProblemsOptimalMIQP));
+    }
+
+    if(env->solutionStatistics.numberOfBoundingProblemsFeasibleMIQP > 0)
+    {
+        env->output->outputInfo(fmt::format("  - MIQP problems, feasible                      {}",
+            env->solutionStatistics.numberOfBoundingProblemsFeasibleMIQP));
+    }
+
+    env->output->outputInfo("");
+
     if(env->solutionStatistics.numberOfExploredNodes > 0)
     {
         env->output->outputInfo(fmt::format(

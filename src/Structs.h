@@ -205,6 +205,7 @@ struct IntegerCut
 struct SolutionStatistics
 {
     int numberOfIterations = 0;
+
     int numberOfProblemsLP = 0;
     int numberOfProblemsQP = 0;
     int numberOfProblemsQCQP = 0;
@@ -214,6 +215,16 @@ struct SolutionStatistics
     int numberOfProblemsOptimalMIQP = 0;
     int numberOfProblemsFeasibleMIQCQP = 0;
     int numberOfProblemsOptimalMIQCQP = 0;
+
+    int numberOfBoundingProblemsLP = 0;
+    int numberOfBoundingProblemsQP = 0;
+    int numberOfBoundingProblemsQCQP = 0;
+    int numberOfBoundingProblemsFeasibleMILP = 0;
+    int numberOfBoundingProblemsOptimalMILP = 0;
+    int numberOfBoundingProblemsFeasibleMIQP = 0;
+    int numberOfBoundingProblemsOptimalMIQP = 0;
+    int numberOfBoundingProblemsFeasibleMIQCQP = 0;
+    int numberOfBoundingProblemsOptimalMIQCQP = 0;
 
     int numberOfFunctionEvalutions = 0;
     int numberOfGradientEvaluations = 0;
@@ -268,6 +279,14 @@ struct SolutionStatistics
         return (numberOfProblemsLP + numberOfProblemsQP + numberOfProblemsFeasibleMILP + numberOfProblemsOptimalMILP
             + numberOfProblemsFeasibleMIQP + numberOfProblemsOptimalMIQP + numberOfProblemsOptimalMIQCQP
             + numberOfProblemsFeasibleMIQCQP);
+    };
+
+    int getNumberOfTotalBoundingProblems()
+    {
+        return (numberOfBoundingProblemsLP + numberOfBoundingProblemsQP + numberOfBoundingProblemsFeasibleMILP
+            + numberOfBoundingProblemsOptimalMILP + numberOfBoundingProblemsFeasibleMIQP
+            + numberOfBoundingProblemsOptimalMIQP + numberOfBoundingProblemsOptimalMIQCQP
+            + numberOfBoundingProblemsFeasibleMIQCQP);
     };
 };
 

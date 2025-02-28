@@ -350,6 +350,59 @@ std::string Results::getResultsOSrL()
     otherResultsNode->InsertEndChild(otherNode);
 
     otherNode = osrlDocument.NewElement("other");
+    otherNode->SetAttribute("name", "NumberOfBoundingLPProblems");
+    otherNode->SetAttribute("value", env->solutionStatistics.numberOfBoundingProblemsLP);
+    otherNode->SetAttribute("description", "The number of convex bounding LP problems solved in the dual strategy");
+    otherResultsNode->InsertEndChild(otherNode);
+
+    otherNode = osrlDocument.NewElement("other");
+    otherNode->SetAttribute("name", "NumberOfBoundingQPProblems");
+    otherNode->SetAttribute("value", env->solutionStatistics.numberOfBoundingProblemsQP);
+    otherNode->SetAttribute("description", "The number of convex bounding QP problems solved in the dual strategy");
+    otherResultsNode->InsertEndChild(otherNode);
+
+    otherNode = osrlDocument.NewElement("other");
+    otherNode->SetAttribute("name", "NumberOfFeasibleBoundingMILPProblems");
+    otherNode->SetAttribute("value", env->solutionStatistics.numberOfBoundingProblemsFeasibleMILP);
+    otherNode->SetAttribute(
+        "description", "The number of convex bounding MILP problems solved to feasibility in the dual strategy");
+    otherResultsNode->InsertEndChild(otherNode);
+
+    otherNode = osrlDocument.NewElement("other");
+    otherNode->SetAttribute("name", "NumberOfFeasibleBoundingMIQPProblems");
+    otherNode->SetAttribute("value", env->solutionStatistics.numberOfBoundingProblemsFeasibleMIQP);
+    otherNode->SetAttribute(
+        "description", "The number of convex bounding MIQP problems solved to feasibility in the dual strategy");
+    otherResultsNode->InsertEndChild(otherNode);
+
+    otherNode = osrlDocument.NewElement("other");
+    otherNode->SetAttribute("name", "NumberOfOptimalBoundingMILPProblems");
+    otherNode->SetAttribute("value", env->solutionStatistics.numberOfBoundingProblemsOptimalMILP);
+    otherNode->SetAttribute(
+        "description", "The number of convex bounding MILP problems solved to optimality in the dual strategy");
+    otherResultsNode->InsertEndChild(otherNode);
+
+    otherNode = osrlDocument.NewElement("other");
+    otherNode->SetAttribute("name", "NumberOfOptimalBoundingMIQPProblems");
+    otherNode->SetAttribute("value", env->solutionStatistics.numberOfBoundingProblemsOptimalMIQP);
+    otherNode->SetAttribute(
+        "description", "The number of convex bounding MIQP problems solved to optimality in the dual strategy");
+    otherResultsNode->InsertEndChild(otherNode);
+
+    int totalNumberOfBoundingProblems = env->solutionStatistics.numberOfBoundingProblemsLP
+        + env->solutionStatistics.numberOfBoundingProblemsFeasibleMILP
+        + env->solutionStatistics.numberOfBoundingProblemsOptimalMILP
+        + env->solutionStatistics.numberOfBoundingProblemsQP
+        + env->solutionStatistics.numberOfBoundingProblemsFeasibleMIQP
+        + env->solutionStatistics.numberOfBoundingProblemsOptimalMIQP;
+
+    otherNode = osrlDocument.NewElement("other");
+    otherNode->SetAttribute("name", "TotalNumberOfBoundingProblems");
+    otherNode->SetAttribute("value", totalNumberOfBoundingProblems);
+    otherNode->SetAttribute("description", "The total number of convex bounding problems solved in the dual strategy");
+    otherResultsNode->InsertEndChild(otherNode);
+
+    otherNode = osrlDocument.NewElement("other");
     otherNode->SetAttribute("name", "NumberOfNLPProblems");
     otherNode->SetAttribute("value", env->solutionStatistics.numberOfProblemsFixedNLP);
     otherNode->SetAttribute("description", "The number of NLP problems solved in the primal strategy");
