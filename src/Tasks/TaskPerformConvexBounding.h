@@ -39,9 +39,12 @@ private:
     int lastNumberOfHyperplanesWithNonconvexSource = 0;
     int idleIterations = 0;
     bool ignoreIdleIterations = false;
+    int lastAddedHyperplane = 0;
 
     std::shared_ptr<TaskBase> taskSelectHPPts;
     std::shared_ptr<TaskSelectHyperplanePointsObjectiveFunction> taskSelectHPPtsByObjectiveRootsearch;
     std::shared_ptr<TaskUpdateInteriorPoint> tUpdateInteriorPoint;
+
+    MIPSolverPtr MIPSolver;
 };
 } // namespace SHOT

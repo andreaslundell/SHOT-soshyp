@@ -66,6 +66,35 @@ TaskPerformConvexBounding::TaskPerformConvexBounding(EnvironmentPtr envPtr, bool
         taskSelectHPPtsByObjectiveRootsearch = std::make_shared<TaskSelectHyperplanePointsObjectiveFunction>(env);
     }
 
+#ifdef HAS_CPLEX
+    if(env->results->usedMIPSolver == ES_MIPSolver::Cplex)
+    {
+        MIPSolver = MIPSolverPtr(std::make_shared<MIPSolverCplex>(env));
+    }
+#endif
+
+#ifdef HAS_GUROBI
+    if(env->results->usedMIPSolver == ES_MIPSolver::Gurobi)
+    {
+        MIPSolver = MIPSolverPtr(std::make_shared<MIPSolverGurobi>(env));
+    }
+#endif
+
+#ifdef HAS_CBC
+    if(env->results->usedMIPSolver == ES_MIPSolver::Cbc)
+    {
+        MIPSolver = MIPSolverPtr(std::make_shared<MIPSolverCbc>(env));
+    }
+#endif
+
+    assert(MIPSolver);
+
+    if(!MIPSolver->initializeProblem())
+        throw Exception("         Cannot initialize selected MIP solver.");
+
+    taskCreateMIPProblem = std::make_shared<TaskCreateMIPProblem>(env, MIPSolver, env->reformulatedProblem);
+    taskCreateMIPProblem->run();
+
     env->timing->stopTimer("ConvexBounding");
 }
 
@@ -108,47 +137,18 @@ void TaskPerformConvexBounding::run()
     else
         env->output->outputInfo("        Convex bounding started");
 
-    MIPSolverPtr MIPSolver;
-
-#ifdef HAS_CPLEX
-    if(env->results->usedMIPSolver == ES_MIPSolver::Cplex)
-    {
-        MIPSolver = MIPSolverPtr(std::make_shared<MIPSolverCplex>(env));
-    }
-#endif
-
-#ifdef HAS_GUROBI
-    if(env->results->usedMIPSolver == ES_MIPSolver::Gurobi)
-    {
-        MIPSolver = MIPSolverPtr(std::make_shared<MIPSolverGurobi>(env));
-    }
-#endif
-
-#ifdef HAS_CBC
-    if(env->results->usedMIPSolver == ES_MIPSolver::Cbc)
-    {
-        MIPSolver = MIPSolverPtr(std::make_shared<MIPSolverCbc>(env));
-    }
-#endif
-
-    assert(MIPSolver);
-
-    if(!MIPSolver->initializeProblem())
-        throw Exception("         Cannot initialize selected MIP solver.");
-
-    taskCreateMIPProblem = std::make_shared<TaskCreateMIPProblem>(env, MIPSolver, env->reformulatedProblem);
-    taskCreateMIPProblem->run();
-
     int numberHyperplanesAdded = 0;
 
-    for(auto HP : env->dualSolver->generatedHyperplanes)
+    for(int i = lastAddedHyperplane; i < env->dualSolver->generatedHyperplanes.size(); ++i)
     {
-        if(HP.isSourceConvex)
+        if(env->dualSolver->generatedHyperplanes[i].isSourceConvex)
         {
-            if(MIPSolver->createHyperplane((Hyperplane)HP))
+            if(MIPSolver->createHyperplane((Hyperplane)env->dualSolver->generatedHyperplanes[i]))
                 numberHyperplanesAdded++;
         }
     }
+
+    int lastAddedHyperplane = env->dualSolver->generatedHyperplanes.size();
 
     double currDual = env->results->getGlobalDualBound();
 
@@ -302,7 +302,7 @@ void TaskPerformConvexBounding::run()
     {
         env->output->outputInfo(fmt::format("x       Convex bounding finished with new global dual bound {}. Old bound "
                                             "was {}. Absolute improvement: {}",
-            env->results->getGlobalDualBound(), currDual, std::abs(currDual - env->results->getGlobalDualBound())));
+            objectiveBound, currDual, std::abs(currDual - env->results->getGlobalDualBound())));
 
         env->solutionStatistics.numberOfDualImprovementsAfterConvexBounding++;
     }
@@ -310,7 +310,7 @@ void TaskPerformConvexBounding::run()
     {
         env->output->outputInfo(
             fmt::format("        Convex bounding finished with dual bound {}. No improvement over old bound {}",
-                currDual, env->results->getGlobalDualBound()));
+                objectiveBound, env->results->getGlobalDualBound()));
     }
 
     lastNumberOfHyperplanesWithConvexSource = env->solutionStatistics.numberOfHyperplanesWithConvexSource;
