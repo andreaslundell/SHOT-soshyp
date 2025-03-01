@@ -139,11 +139,20 @@ SolutionStrategyMultiTree::SolutionStrategyMultiTree(EnvironmentPtr envPtr)
     auto tSolveIteration = std::make_shared<TaskSolveIteration>(env);
     env->tasks->addTask(tSolveIteration, "SolveIter");
 
+    // Normal convex bounding
     if(env->reformulatedProblem->properties.convexity != E_ProblemConvexity::Convex
         && env->settings->getSetting<bool>("ConvexBounding.Use", "Dual"))
     {
         auto tPerformConvexBounding = std::make_shared<TaskPerformConvexBounding>(env);
         env->tasks->addTask(tPerformConvexBounding, "ConvexBounding");
+    }
+
+    // Forced convex bounding before terminating
+    if(env->reformulatedProblem->properties.convexity != E_ProblemConvexity::Convex
+        && env->settings->getSetting<bool>("ConvexBounding.Use", "Dual"))
+    {
+        auto tPerformConvexBounding = std::make_shared<TaskPerformConvexBounding>(env, true);
+        std::dynamic_pointer_cast<TaskSequential>(tFinalizeSolution)->addTask(tPerformConvexBounding);
     }
 
     auto tSelectPrimSolPool = std::make_shared<TaskSelectPrimalCandidatesFromSolutionPool>(env);

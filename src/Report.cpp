@@ -114,18 +114,21 @@ void Report::outputIterationDetail(int iterationNumber, std::string iterationDes
             combDualCuts = fmt::format("{:>4d} | {:<6d}", dualCutsAdded, dualCutsTotal);
         }
 
+        bool solutionIsGlobal
+            = env->results->solutionIsGlobal || (dualObjectiveValue == env->results->getGlobalDualBound());
+
         std::string combObjectiveValue;
         if(env->problem->objectiveFunction->properties.isMinimize)
         {
-            combObjectiveValue = fmt::format("{:>12s}{}| {:<12s}",
-                Utilities::toStringFormat(dualObjectiveValue, "{:g}"), env->results->solutionIsGlobal ? " " : "*",
-                Utilities::toStringFormat(primalObjectiveValue, "{:g}"));
+            combObjectiveValue
+                = fmt::format("{:>12s}{}| {:<12s}", Utilities::toStringFormat(dualObjectiveValue, "{:g}"),
+                    solutionIsGlobal ? " " : "*", Utilities::toStringFormat(primalObjectiveValue, "{:g}"));
         }
         else
         {
             combObjectiveValue
                 = fmt::format("{:>12s} |{}{:<12s}", Utilities::toStringFormat(primalObjectiveValue, "{:g}"),
-                    env->results->solutionIsGlobal ? " " : "*", Utilities::toStringFormat(dualObjectiveValue, "{:g}"));
+                    solutionIsGlobal ? " " : "*", Utilities::toStringFormat(dualObjectiveValue, "{:g}"));
         }
 
         std::string combObjectiveGap

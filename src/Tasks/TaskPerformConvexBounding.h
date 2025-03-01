@@ -27,7 +27,7 @@ namespace SHOT
 class TaskPerformConvexBounding : public TaskBase
 {
 public:
-    TaskPerformConvexBounding(EnvironmentPtr envPtr);
+    TaskPerformConvexBounding(EnvironmentPtr envPtr, bool ignoreIdleIterations = false);
     ~TaskPerformConvexBounding() override;
 
     void run() override;
@@ -38,6 +38,7 @@ private:
     int lastNumberOfHyperplanesWithConvexSource = 0;
     int lastNumberOfHyperplanesWithNonconvexSource = 0;
     int idleIterations = 0;
+    bool ignoreIdleIterations = false;
 
     std::shared_ptr<TaskBase> taskSelectHPPts;
     std::shared_ptr<TaskSelectHyperplanePointsObjectiveFunction> taskSelectHPPtsByObjectiveRootsearch;

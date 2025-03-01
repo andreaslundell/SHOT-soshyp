@@ -1217,7 +1217,6 @@ void Results::setDualBound(double value, bool forceGlobal)
     if(this->solutionIsGlobal || forceGlobal)
     {
         this->globalDualBound = value;
-        this->solutionIsGlobal = true;
     }
 
     env->solutionStatistics.numberOfIterationsWithDualStagnation = 0;
