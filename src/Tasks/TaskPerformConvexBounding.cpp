@@ -75,26 +75,19 @@ void TaskPerformConvexBounding::run()
 {
     env->timing->startTimer("ConvexBounding");
 
-    /*if(env->solutionStatistics.numberOfHyperplanesWithConvexSource == 0)
+    if(lastNumberOfHyperplanesWithConvexSource == env->solutionStatistics.numberOfHyperplanesWithConvexSource)
     {
-        env->output->outputInfo(
-            "        Convex bounding not performed since no hyperplanes with convex source have been added.");
+        env->output->outputDebug(
+            "        Convex bounding not performed since no new hyperplanes with convex source have been added.");
         return;
     }
 
     if(env->solutionStatistics.numberOfHyperplanesWithNonconvexSource == 0)
     {
-        env->output->outputInfo(
+        env->output->outputDebug(
             "        Convex bounding not performed since no hyperplanes with nonconvex source have been added.");
         return;
     }
-
-    if(lastNumberOfHyperplanesWithConvexSource == env->solutionStatistics.numberOfHyperplanesWithConvexSource)
-    {
-        env->output->outputInfo(
-            "        Convex bounding not performed since no new hyperplanes with convex source have been added.");
-        return;
-    }*/
 
     if(!ignoreIdleIterations
         && this->idleIterations < env->settings->getSetting<int>("ConvexBounding.IdleIterations", "Dual"))
@@ -176,7 +169,7 @@ void TaskPerformConvexBounding::run()
     {
         auto primalSol = env->results->primalSolution;
         env->reformulatedProblem->augmentAuxiliaryVariableValues(primalSol);
-        MIPSolver->addMIPStart(primalSol);
+        // MIPSolver->addMIPStart(primalSol);
     }
 
     MIPSolver->setSolutionLimit(2100000000);
@@ -307,15 +300,17 @@ void TaskPerformConvexBounding::run()
 
     if(currDual != env->results->getGlobalDualBound())
     {
-        env->output->outputInfo(fmt::format(
-            "x       Convex bounding finished. New global dual bound {}. Old bound was {}. Absolute improvement: {}",
+        env->output->outputInfo(fmt::format("x       Convex bounding finished with new global dual bound {}. Old bound "
+                                            "was {}. Absolute improvement: {}",
             env->results->getGlobalDualBound(), currDual, std::abs(currDual - env->results->getGlobalDualBound())));
 
         env->solutionStatistics.numberOfDualImprovementsAfterConvexBounding++;
     }
     else
     {
-        env->output->outputInfo(fmt::format("        Convex bounding finished. No new global dual bound found."));
+        env->output->outputInfo(
+            fmt::format("        Convex bounding finished with dual bound {}. No improvement over old bound {}",
+                currDual, env->results->getGlobalDualBound()));
     }
 
     lastNumberOfHyperplanesWithConvexSource = env->solutionStatistics.numberOfHyperplanesWithConvexSource;
