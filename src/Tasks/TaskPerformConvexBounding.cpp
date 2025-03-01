@@ -104,13 +104,6 @@ void TaskPerformConvexBounding::run()
 {
     env->timing->startTimer("ConvexBounding");
 
-    if(lastNumberOfHyperplanesWithConvexSource == env->solutionStatistics.numberOfHyperplanesWithConvexSource)
-    {
-        env->output->outputDebug(
-            "        Convex bounding not performed since no new hyperplanes with convex source have been added.");
-        return;
-    }
-
     if(env->solutionStatistics.numberOfHyperplanesWithNonconvexSource == 0)
     {
         env->output->outputDebug(
@@ -118,12 +111,20 @@ void TaskPerformConvexBounding::run()
         return;
     }
 
+    if(lastNumberOfHyperplanesWithConvexSource == env->solutionStatistics.numberOfHyperplanesWithConvexSource)
+    {
+        env->output->outputDebug(
+            "        Convex bounding not performed since no new hyperplanes with convex source have been added.");
+        return;
+    }
+
     if(!ignoreIdleIterations
         && this->idleIterations < env->settings->getSetting<int>("ConvexBounding.IdleIterations", "Dual"))
     {
-        env->output->outputInfo(fmt::format("        Convex bounding not performed since number of idle iterations has "
-                                            "not been met. Idle iterations: {} / {}",
-            this->idleIterations, env->settings->getSetting<int>("ConvexBounding.IdleIterations", "Dual")));
+        env->output->outputDebug(
+            fmt::format("        Convex bounding not performed since number of idle iterations has "
+                        "not been met. Idle iterations: {} / {}",
+                this->idleIterations, env->settings->getSetting<int>("ConvexBounding.IdleIterations", "Dual")));
 
         this->idleIterations++;
         return;
