@@ -34,6 +34,7 @@ void DualSolver::addDualSolutionCandidate(DualSolution solution)
 void DualSolver::checkDualSolutionCandidates()
 {
     double currDualBound = env->results->getCurrentDualBound();
+    double globalDualBound = env->results->getGlobalDualBound();
     double currPrimalBound = env->results->getPrimalBound();
 
     double gapRelTolerance = env->settings->getSetting<double>("ObjectiveGap.Relative", "Termination");
@@ -53,6 +54,11 @@ void DualSolver::checkDualSolutionCandidates()
             {
                 updateDual = true;
             }
+            else if(C.sourceType == E_DualSolutionSource::ConvexBounding && C.objValue > globalDualBound
+                && (C.objValue <= currPrimalBound))
+            {
+                updateDual = true;
+            }
         }
         else
         {
@@ -62,6 +68,11 @@ void DualSolver::checkDualSolutionCandidates()
                 updateDual = true;
             }
             else if(C.objValue < currDualBound && (C.objValue >= currPrimalBound))
+            {
+                updateDual = true;
+            }
+            else if(C.sourceType == E_DualSolutionSource::ConvexBounding && C.objValue < globalDualBound
+                && (C.objValue >= currPrimalBound))
             {
                 updateDual = true;
             }
