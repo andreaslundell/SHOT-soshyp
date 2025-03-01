@@ -51,7 +51,7 @@ TaskPerformConvexBounding::TaskPerformConvexBounding(EnvironmentPtr envPtr, bool
         if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
             == ES_HyperplaneCutStrategy::ESH)
         {
-            tUpdateInteriorPoint = std::make_shared<TaskUpdateInteriorPoint>(env);
+            taskUpdateInteriorPoint = std::make_shared<TaskUpdateInteriorPoint>(env);
             taskSelectHPPts = std::make_shared<TaskSelectHyperplanePointsESH>(env);
         }
         else
@@ -94,6 +94,8 @@ TaskPerformConvexBounding::TaskPerformConvexBounding(EnvironmentPtr envPtr, bool
 
     taskCreateMIPProblem = std::make_shared<TaskCreateMIPProblem>(env, MIPSolver, env->reformulatedProblem);
     taskCreateMIPProblem->run();
+
+    taskAddHyperplanes = std::make_shared<TaskAddHyperplanes>(env);
 
     env->timing->stopTimer("ConvexBounding");
 }
@@ -211,19 +213,22 @@ void TaskPerformConvexBounding::run()
             if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
                 == ES_HyperplaneCutStrategy::ESH)
             {
-                tUpdateInteriorPoint->run();
+                taskUpdateInteriorPoint->run();
                 static_cast<TaskSelectHyperplanePointsESH*>(taskSelectHPPts.get())->run(solutionPoints);
             }
             else
             {
                 static_cast<TaskSelectHyperplanePointsECP*>(taskSelectHPPts.get())->run(solutionPoints);
             }
+
+            taskAddHyperplanes->run();
         }
 
         if(env->reformulatedProblem->objectiveFunction->properties.classification
             > E_ObjectiveFunctionClassification::Quadratic)
         {
             taskSelectHPPtsByObjectiveRootsearch->run(solutionPoints);
+            taskAddHyperplanes->run();
         }
 
         int hyperplanesAfter = env->solutionStatistics.numberOfHyperplanesWithConvexSource

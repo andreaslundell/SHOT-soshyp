@@ -16,6 +16,7 @@
 
 #include "TaskCreateMIPProblem.h"
 
+#include "TaskAddHyperplanes.h"
 #include "TaskSelectHyperplanePointsObjectiveFunction.h"
 #include "TaskSelectHyperplanePointsESH.h"
 #include "TaskSelectHyperplanePointsECP.h"
@@ -43,7 +44,8 @@ private:
 
     std::shared_ptr<TaskBase> taskSelectHPPts;
     std::shared_ptr<TaskSelectHyperplanePointsObjectiveFunction> taskSelectHPPtsByObjectiveRootsearch;
-    std::shared_ptr<TaskUpdateInteriorPoint> tUpdateInteriorPoint;
+    std::shared_ptr<TaskUpdateInteriorPoint> taskUpdateInteriorPoint;
+    std::shared_ptr<TaskAddHyperplanes> taskAddHyperplanes;
 
     MIPSolverPtr MIPSolver;
 };
