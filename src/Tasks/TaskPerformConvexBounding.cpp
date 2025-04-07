@@ -33,9 +33,13 @@
 #endif
 
 #include "../Results.h"
-#include "../Tasks/TaskCreateMIPProblem.h"
+
+#include "TaskSelectHyperplanePointsESH.h"
+#include "TaskSelectHyperplanePointsECP.h"
 
 #include "../PrimalSolver.h"
+
+#include "../TaskHandler.h"
 
 namespace SHOT
 {
@@ -104,7 +108,35 @@ TaskPerformConvexBounding::~TaskPerformConvexBounding() = default;
 
 void TaskPerformConvexBounding::run()
 {
-    env->timing->startTimer("ConvexBounding");
+
+    // Need to do the termination checks manually as well since convex bounding is also done in the finalize step
+    /*if(env->tasks->isTerminated())
+    {
+        return;
+    }
+
+    if(env->timing->getElapsedTime("Total") >= env->settings->getSetting<double>("TimeLimit", "Termination"))
+    {
+        return;
+    }
+
+    if(env->results->solutionIsGlobal
+        && (env->results->isRelativeObjectiveGapToleranceMet() || env->results->isAbsoluteObjectiveGapToleranceMet()))
+    {
+        return;
+    }*/
+
+    if(env->results->getCurrentIteration()->iterationNumber <= 1)
+    {
+        return;
+    }
+
+    auto currIter = env->results->getCurrentIteration();
+
+    if(env->problem->properties.isDiscrete && !currIter->isMIP())
+    {
+        return;
+    }
 
     if(env->solutionStatistics.numberOfHyperplanesWithNonconvexSource == 0)
     {
@@ -131,6 +163,8 @@ void TaskPerformConvexBounding::run()
         this->idleIterations++;
         return;
     }
+
+    env->timing->startTimer("ConvexBounding");
 
     this->idleIterations = 0;
 

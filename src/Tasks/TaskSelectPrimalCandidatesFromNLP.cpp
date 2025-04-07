@@ -18,6 +18,7 @@
 #include "../Results.h"
 #include "../Settings.h"
 #include "../Solver.h"
+#include "../TaskHandler.h"
 #include "../Timing.h"
 #include "../Utilities.h"
 
@@ -151,6 +152,11 @@ TaskSelectPrimalCandidatesFromNLP::TaskSelectPrimalCandidatesFromNLP(Environment
         NLPSolver->updateVariableUpperBound(V->index, V->upperBound);
     }
 
+    taskCheckAbsGap = std::make_shared<TaskCheckAbsoluteGap>(env, "FinalizeSolution");
+    taskCheckRelGap = std::make_shared<TaskCheckRelativeGap>(env, "FinalizeSolution");
+    taskCheckTimeLimit = std::make_shared<TaskCheckTimeLimit>(env, "FinalizeSolution");
+    taskCheckUserTermination = std::make_shared<TaskCheckUserTermination>(env, "FinalizeSolution");
+
     env->timing->stopTimer("PrimalBoundStrategyNLP");
     env->timing->stopTimer("PrimalStrategy");
 }
@@ -159,6 +165,24 @@ TaskSelectPrimalCandidatesFromNLP::~TaskSelectPrimalCandidatesFromNLP() = defaul
 
 void TaskSelectPrimalCandidatesFromNLP::run()
 {
+    // Need to do the termination checks manually as well to avoid a loop since this task is also done in the finalize
+    // step
+    if(env->tasks->isTerminated())
+    {
+        return;
+    }
+
+    if(env->timing->getElapsedTime("Total") >= env->settings->getSetting<double>("TimeLimit", "Termination"))
+    {
+        return;
+    }
+
+    if(env->results->solutionIsGlobal
+        && (env->results->isRelativeObjectiveGapToleranceMet() || env->results->isAbsoluteObjectiveGapToleranceMet()))
+    {
+        return;
+    }
+
     if(env->primalSolver->fixedPrimalNLPCandidates.size() == 0)
     {
         env->solutionStatistics.numberOfIterationsWithoutNLPCallMIP++;
@@ -207,6 +231,11 @@ bool TaskSelectPrimalCandidatesFromNLP::solveFixedNLP()
 
     for(auto& CAND : env->primalSolver->fixedPrimalNLPCandidates)
     {
+        taskCheckAbsGap->run();
+        taskCheckRelGap->run();
+        taskCheckTimeLimit->run();
+        taskCheckUserTermination->run();
+
         VectorDouble fixedVariableValues(discreteVariableIndexes.size());
 
         int sizeOfVariableVector = sourceProblem->properties.numberOfVariables;

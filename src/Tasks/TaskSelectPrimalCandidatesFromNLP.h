@@ -17,6 +17,11 @@
 
 #include "../Structs.h"
 
+#include "../Tasks/TaskCheckAbsoluteGap.h"
+#include "../Tasks/TaskCheckRelativeGap.h"
+#include "../Tasks/TaskCheckTimeLimit.h"
+#include "../Tasks/TaskCheckUserTermination.h"
+
 namespace SHOT
 {
 class INLPSolver;
@@ -56,5 +61,10 @@ private:
 
     ProblemPtr sourceProblem;
     bool sourceIsReformulatedProblem = false;
+
+    std::shared_ptr<TaskCheckAbsoluteGap> taskCheckAbsGap;
+    std::shared_ptr<TaskCheckRelativeGap> taskCheckRelGap;
+    std::shared_ptr<TaskCheckTimeLimit> taskCheckTimeLimit;
+    std::shared_ptr<TaskCheckUserTermination> taskCheckUserTermination;
 };
 } // namespace SHOT

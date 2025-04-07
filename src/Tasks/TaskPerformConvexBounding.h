@@ -14,12 +14,9 @@
 #include "../MIPSolver/IMIPSolver.h"
 #include "../Model/Problem.h"
 
-#include "TaskCreateMIPProblem.h"
-
 #include "TaskAddHyperplanes.h"
+#include "TaskCreateMIPProblem.h"
 #include "TaskSelectHyperplanePointsObjectiveFunction.h"
-#include "TaskSelectHyperplanePointsESH.h"
-#include "TaskSelectHyperplanePointsECP.h"
 #include "TaskUpdateInteriorPoint.h"
 
 namespace SHOT
