@@ -70,7 +70,8 @@ enum class E_HyperplaneSource
     InteriorPointSearch,
     MIPCallbackRelaxed,
     ObjectiveRootsearch,
-    ObjectiveCuttingPlane
+    ObjectiveCuttingPlane,
+    External
 };
 
 enum class E_IntegerCutSource

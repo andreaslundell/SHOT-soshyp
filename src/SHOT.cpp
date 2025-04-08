@@ -31,6 +31,10 @@ namespace fs = std::experimental;
 #include <iostream>
 #include <string>
 
+#include <julia.h>
+
+JULIA_DEFINE_FAST_TLS
+
 using namespace SHOT;
 
 int main(int argc, char* argv[])

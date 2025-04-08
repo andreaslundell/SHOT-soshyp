@@ -51,6 +51,11 @@
 #include "../Tasks/TaskSelectHyperplanePointsESH.h"
 #include "../Tasks/TaskSelectHyperplanePointsECP.h"
 #include "../Tasks/TaskAddHyperplanes.h"
+
+#ifdef HAS_JULIA
+#include "../Tasks/TaskAddHyperplanesLasserreHierarchy.h"
+#endif
+
 #include "../Tasks/TaskAddPrimalReductionCut.h"
 #include "../Tasks/TaskCheckMaxNumberOfPrimalReductionCuts.h"
 
@@ -115,6 +120,9 @@ SolutionStrategyMultiTree::SolutionStrategyMultiTree(EnvironmentPtr envPtr)
 
     auto tInitializeIteration = std::make_shared<TaskInitializeIteration>(env);
     env->tasks->addTask(tInitializeIteration, "InitIter");
+
+    // auto tAddHPsLasserreHierarchy = std::make_shared<TaskAddHyperplanesLasserreHierarchy>(env);
+    // env->tasks->addTask(tAddHPsLasserreHierarchy, "AddHPsLasserreHierarchy");
 
     auto tAddHPs = std::make_shared<TaskAddHyperplanes>(env);
     env->tasks->addTask(tAddHPs, "AddHPs");

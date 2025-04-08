@@ -48,6 +48,11 @@
 #include "../Tasks/TaskSelectHyperplanePointsESH.h"
 #include "../Tasks/TaskSelectHyperplanePointsECP.h"
 #include "../Tasks/TaskAddHyperplanes.h"
+
+#ifdef HAS_JULIA
+#include "../Tasks/TaskAddHyperplanesLasserreHierarchy.h"
+#endif
+
 #include "../Tasks/TaskAddPrimalReductionCut.h"
 #include "../Tasks/TaskCheckMaxNumberOfPrimalReductionCuts.h"
 
@@ -108,6 +113,9 @@ SolutionStrategyNLP::SolutionStrategyNLP(EnvironmentPtr envPtr)
 
     auto tAddHPs = std::make_shared<TaskAddHyperplanes>(env);
     env->tasks->addTask(tAddHPs, "AddHPs");
+
+    auto tAddHPsLasserreHierarchy = std::make_shared<TaskAddHyperplanesLasserreHierarchy>(env);
+    env->tasks->addTask(tAddHPsLasserreHierarchy, "AddHPsLasserreHierarchy");
 
     if(static_cast<ES_MIPPresolveStrategy>(env->settings->getSetting<int>("MIP.Presolve.Frequency", "Dual"))
         != ES_MIPPresolveStrategy::Never)

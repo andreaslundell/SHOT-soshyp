@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.20)
 include(ExternalProject)
 
 # For ccache
@@ -66,6 +66,10 @@ set(CBC_DIR "/opt/Cbc-2.10" CACHE STRING "The base directory where Cbc is locate
 option(HAS_IPOPT "Is Ipopt available" OFF)
 set(IPOPT_DIR "/opt/ipopt" CACHE STRING "The base directory where Ipopt is located (if available).")
 
+# Julia
+option(HAS_JULIA "Is Julia available" OFF)
+set(JULIA_DIR "/opt/julia")
+
 # Create also the executable
 option(GENERATE_EXE "Should the SHOT executable be generated (requires at least that either OS or GAMS is available)"
        ON)
@@ -88,6 +92,7 @@ file(TO_CMAKE_PATH "${CPLEX_DIR}" ${CPLEX_DIR})
 file(TO_CMAKE_PATH "${GAMS_DIR}" ${GAMS_DIR})
 file(TO_CMAKE_PATH "${GUROBI_DIR}" ${GUROBI_DIR})
 file(TO_CMAKE_PATH "${IPOPT_DIR}" ${IPOPT_DIR})
+file(TO_CMAKE_PATH "${JULIA_DIR}" ${JULIA_DIR})
 
 # Check if a MIP solver is defined
 if(NOT (HAS_CPLEX OR HAS_GUROBI OR HAS_CBC))
@@ -177,7 +182,50 @@ file(
     "${PROJECT_SOURCE_DIR}/src/NLPSolver/NLPSolverCuttingPlaneMinimax.h"
     "${PROJECT_SOURCE_DIR}/src/NLPSolver/NLPSolverSHOT.h"
     "${PROJECT_SOURCE_DIR}/src/SolutionStrategy/*.h"
-    "${PROJECT_SOURCE_DIR}/src/Tasks/*.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskExecuteRelaxationStrategy.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskTerminate.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskReformulateProblem.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskInitializeIteration.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckAbsoluteGap.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckDualStagnation.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskInitializeRootsearch.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsObjectiveFunction.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskFindInteriorPoint.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalFixedNLPPointsFromSolutionPool.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskPerformBoundTightening.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskAddPrimalReductionCut.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSimple.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskPrintIterationReport.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSolveIteration.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskRepairableBase.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskBase.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckIterationLimit.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalCandidatesFromSolutionPool.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskAddIntegerCuts.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskGoto.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCreateDualProblem.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskConditional.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskException.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskAddHyperplanes.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckMaxNumberOfPrimalReductionCuts.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsECP.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskUpdateInteriorPoint.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskExecuteSolutionLimitStrategy.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskInitializeDualSolver.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCalculateSolutionChangeNorm.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalCandidatesFromNLP.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckTimeLimit.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskClearFixedPrimalCandidates.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsESH.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckUserTermination.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckPrimalStagnation.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalCandidatesFromRootsearch.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckConstraintTolerance.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskPresolve.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckRelativeGap.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSequential.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckIterationError.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskRepairInfeasibleDualProblem.h"
     "${PROJECT_SOURCE_DIR}/src/Settings.h"
     "${TINYXML2_DIR}/tinyxml2.h"
     #"${CPPAD_DIR}/include/cppad/cppad.hpp"
@@ -300,6 +348,17 @@ if(HAS_GAMS)
 
 endif(HAS_GAMS)
 
+# Julia
+
+if(HAS_JULIA)
+    add_definitions(-DHAS_JULIA)
+    set(JULIA_INCLUDE_DIR "${JULIA_DIR}/include/julia")
+    set(JULIA_LIBRARY "${JULIA_DIR}/lib/libjulia.so")  # .dylib on macOS, .dll on Windows
+    include_directories(${JULIA_INCLUDE_DIR})
+    set(TASK_SOURCES ${TASK_SOURCES} "${PROJECT_SOURCE_DIR}/src/Tasks/TaskAddHyperplanesLasserreHierarchy.cpp")
+    set(TASK_SOURCES ${TASK_SOURCES} "${PROJECT_SOURCE_DIR}/src/Tasks/TaskAddHyperplanesLasserreHierarchy.h")
+endif(HAS_JULIA)
+
 # Finding out link directories from header files
 
 set(INCLUDE_DIRS "")
@@ -346,6 +405,7 @@ file(TO_CMAKE_PATH "${SOURCES}" SOURCES)
 file(TO_CMAKE_PATH "${DUAL_SOURCES}" DUAL_SOURCES)
 file(TO_CMAKE_PATH "${PRIMAL_SOURCES}" PRIMAL_SOURCES)
 file(TO_CMAKE_PATH "${MODELING_SOURCES}" MODELING_SOURCES)
+file(TO_CMAKE_PATH "${TASK_SOURCES}" TASK_SOURCES)
 
 # Will use tinyxml2 as a static library
 add_library(tinyxml2 STATIC ${TINYXML2_DIR}/tinyxml2.h ${TINYXML2_DIR}/tinyxml2.cpp)
@@ -463,11 +523,97 @@ add_library(
 target_link_libraries(SHOTDualStrategy SHOTModel)
 
 # Creates the tasks library
-file(GLOB_RECURSE TASK_SOURCES "${PROJECT_SOURCE_DIR}/src/Tasks/*.cpp")
-# These sources are already added in SHOTHelper
-list(REMOVE_ITEM TASK_SOURCES "${PROJECT_SOURCE_DIR}/src/Tasks/TaskBase.h")
-list(REMOVE_ITEM TASK_SOURCES "${PROJECT_SOURCE_DIR}/src/Tasks/TaskBase.cpp")
-add_library(SHOTTasks STATIC ${TASK_SOURCES})
+
+add_library(
+    SHOTTasks STATIC
+    ${TASK_SOURCES}
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskAddHyperplanes.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskAddHyperplanes.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskAddIntegerCuts.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskAddIntegerCuts.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskAddPrimalReductionCut.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskAddPrimalReductionCut.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCalculateSolutionChangeNorm.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCalculateSolutionChangeNorm.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckAbsoluteGap.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckAbsoluteGap.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckConstraintTolerance.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckConstraintTolerance.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckDualStagnation.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckDualStagnation.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckIterationError.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckIterationError.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckIterationLimit.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckIterationLimit.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckMaxNumberOfPrimalReductionCuts.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckMaxNumberOfPrimalReductionCuts.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckPrimalStagnation.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckPrimalStagnation.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckRelativeGap.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckRelativeGap.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckTimeLimit.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckTimeLimit.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckUserTermination.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckUserTermination.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskClearFixedPrimalCandidates.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskClearFixedPrimalCandidates.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskConditional.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskConditional.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCreateDualProblem.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskCreateDualProblem.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskException.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskExecuteRelaxationStrategy.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskExecuteRelaxationStrategy.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskExecuteSolutionLimitStrategy.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskExecuteSolutionLimitStrategy.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskFindInteriorPoint.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskFindInteriorPoint.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskGoto.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskGoto.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskInitializeDualSolver.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskInitializeDualSolver.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskInitializeIteration.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskInitializeIteration.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskInitializeRootsearch.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskInitializeRootsearch.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskPerformBoundTightening.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskPerformBoundTightening.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskPresolve.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskPresolve.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskPrintIterationReport.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskPrintIterationReport.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskReformulateProblem.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskReformulateProblem.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskRepairInfeasibleDualProblem.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskRepairInfeasibleDualProblem.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskRepairableBase.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskRepairableBase.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsECP.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsECP.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsESH.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsESH.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsObjectiveFunction.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsObjectiveFunction.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalCandidatesFromNLP.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalCandidatesFromNLP.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalCandidatesFromRootsearch.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalCandidatesFromRootsearch.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalCandidatesFromSolutionPool.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalCandidatesFromSolutionPool.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalFixedNLPPointsFromSolutionPool.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalFixedNLPPointsFromSolutionPool.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSequential.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSequential.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSimple.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSimple.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSolveIteration.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSolveIteration.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskTerminate.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskTerminate.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskUpdateInteriorPoint.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskUpdateInteriorPoint.h
+)
+
 target_link_libraries(SHOTTasks SHOTPrimalStrategy)
 target_link_libraries(SHOTTasks SHOTDualStrategy)
 
@@ -611,6 +757,12 @@ target_link_libraries(SHOTSolver SHOTSolutionStrategies)
 # Link the standard library required for std::filesystem (if needed)
 target_link_libraries(SHOTSolver CXX::Filesystem)
 
+# Link the Julia library
+if(HAS_JULIA)
+    target_include_directories(SHOTSolver PRIVATE ${JULIA_INCLUDE_DIRS})
+    target_link_libraries(SHOTSolver ${JULIA_LIBRARY})
+endif(HAS_JULIA)
+
 # Generates the SHOT executable
 if(GENERATE_EXE)
     add_executable(${PROJECT_NAME} "${PROJECT_SOURCE_DIR}/src/SHOT.cpp")
@@ -678,6 +830,12 @@ install(
     ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE
     ${CMAKE_CURRENT_SOURCE_DIR}/README
     DESTINATION bin
+)
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Tasks/LasserreHierarchyCuts.jl
+    ${CMAKE_BINARY_DIR}/LasserreHierarchyCuts.jl
+    COPYONLY
 )
 
 # Need to install the library as well
