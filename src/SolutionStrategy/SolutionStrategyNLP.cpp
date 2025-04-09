@@ -210,6 +210,7 @@ SolutionStrategyNLP::SolutionStrategyNLP(EnvironmentPtr envPtr)
     }
 
     env->tasks->addTask(tAddHPs, "AddHPs");
+    env->tasks->addTask(tAddHPsLasserreHierarchy, "AddHPs");
 
     auto tGoto = std::make_shared<TaskGoto>(env, "SolveIter");
     env->tasks->addTask(tGoto, "Goto");

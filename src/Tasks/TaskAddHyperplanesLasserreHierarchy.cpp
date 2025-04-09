@@ -35,10 +35,57 @@ TaskAddHyperplanesLasserreHierarchy::TaskAddHyperplanesLasserreHierarchy(Environ
     jl_init();
 
     // Load the Julia file
-    jl_eval_string("include(\"LasserreHierarchyCuts.jl\")");
-    jl_eval_string("using .MyFuncs");
+    jl_eval_string("include(\"soshyp//main.jl\")");
+    env->output->outputDebug("        Loading Julia module.");
+    jl_eval_string("using .soshyp");
+    env->output->outputDebug("        Julia module loaded.");
+
+    if(jl_exception_occurred())
+    {
+        env->output->outputError(
+            fmt::format("        Julia exception when preparing problem: {}", jl_typeof_str(jl_exception_occurred())));
+        std::cout << jl_eval_string("sprint(showerror, ccall(:jl_exception_occurred, Any, ()))") << std::endl;
+        return;
+    }
 
     // Get a handle to the function
+    jl_module_t* module = (jl_module_t*)jl_eval_string("soshyp");
+
+    if(jl_exception_occurred())
+    {
+        env->output->outputError(
+            fmt::format("        Julia exception when loading module: {}", jl_typeof_str(jl_exception_occurred())));
+        std::cout << jl_eval_string("sprint(showerror, ccall(:jl_exception_occurred, Any, ()))") << std::endl;
+        return;
+    }
+
+    jl_function_t* funcPrepareProblem = jl_get_function(module, "prepare_problem");
+
+    if(funcPrepareProblem == nullptr)
+    {
+        env->output->outputError("        Function prepare_problem not found!");
+        return;
+    }
+
+    std::string filename = "/tmp/lassarre_problem.txt";
+    std::stringstream problem;
+    problem << env->reformulatedProblem;
+    Utilities::writeStringToFile(filename, problem.str());
+
+    jl_value_t* problemPath = jl_cstr_to_string(filename.c_str());
+    jl_value_t* directory = jl_cstr_to_string("");
+    jl_value_t* prepareProblemStatus = jl_call2(funcPrepareProblem, problemPath, directory);
+
+    if(jl_exception_occurred())
+    {
+        env->output->outputError(
+            fmt::format("        Julia exception when preparing problem: {}", jl_typeof_str(jl_exception_occurred())));
+        std::cout << jl_eval_string("sprint(showerror, ccall(:jl_exception_occurred, Any, ()))") << std::endl;
+        return;
+    }
+
+    for(auto& V : env->reformulatedProblem->allVariables)
+        variableNames.push_back(V->name);
 }
 
 TaskAddHyperplanesLasserreHierarchy::~TaskAddHyperplanesLasserreHierarchy() { jl_atexit_hook(0); }
@@ -47,157 +94,87 @@ void TaskAddHyperplanesLasserreHierarchy::run()
 {
     env->timing->startTimer("DualStrategy");
 
-    int addedHyperplanes = 0;
+    if(env->results->getNumberOfIterations() == 1)
+        return;
 
-    jl_module_t* my_mod = (jl_module_t*)jl_eval_string("MyFuncs");
-    jl_function_t* func = jl_get_function(my_mod, "sos_hyp");
+    auto prevIter = env->results->getPreviousIteration();
 
-    if(func == nullptr)
+    if(prevIter->solutionPoints.size() == 0)
+        return;
+
+    jl_module_t* module = (jl_module_t*)jl_eval_string("soshyp");
+    jl_function_t* funcSosHyp = jl_get_function(module, "sos_hyp");
+
+    if(funcSosHyp == nullptr)
     {
-        printf("Function not found!\n");
-        jl_atexit_hook(0);
+        env->output->outputDebug("        Function sos_hyp not found!");
         return;
     }
-    else
-    {
-        printf("Function found!\n");
-    }
-
-    // Call the function with arguments
-    jl_value_t* arg1 = jl_box_int64(3);
-    jl_value_t* arg2 = jl_box_int64(4);
-    jl_value_t* ret = jl_call2(func, arg1, arg2);
 
     if(jl_exception_occurred())
     {
-        std::cerr << "Julia exception: " << jl_typeof_str(jl_exception_occurred()) << std::endl;
-        std::cerr << jl_string_ptr(jl_eval_string("sprint(showerror, ccall(:jl_exception_occurred, Any, ()))"))
-                  << std::endl;
-        jl_atexit_hook(0);
+        env->output->outputError(fmt::format(
+            "        Julia exception when defining sos_hyp function: {}", jl_typeof_str(jl_exception_occurred())));
+        std::cout << jl_eval_string("sprint(showerror, ccall(:jl_exception_occurred, Any, ()))") << std::endl;
         return;
     }
 
-    if(jl_is_tuple(ret))
+    auto solution = prevIter->solutionPoints.at(0).point;
+    // Utilities::displayVector(solution);
+
+    auto filename = fmt::format("/tmp/solpt_{0}.txt", prevIter->iterationNumber);
+    Utilities::saveVariablePointVectorToFile(solution, variableNames, filename);
+
+    jl_value_t* solutionPath = jl_cstr_to_string(filename.c_str());
+    jl_value_t* directory = jl_cstr_to_string("");
+    jl_value_t* juliaCallResult = jl_call2(funcSosHyp, solutionPath, directory);
+
+    if(jl_is_tuple(juliaCallResult))
     {
-        jl_value_t* v = jl_fieldref(ret, 0);
-        jl_value_t* c = jl_fieldref(ret, 1);
-        std::cout << "sos_hyp returned a tuple." << std::endl;
-        std::cout << "v type: " << jl_typeof_str(v) << std::endl;
-        std::cout << "c type: " << jl_typeof_str(c) << std::endl;
+        jl_value_t* juliaObj = jl_fieldref(juliaCallResult, 0); // Float64
+        jl_value_t* juliaVarIndexes = jl_fieldref(juliaCallResult, 1); // Vector{Int64}
+        jl_value_t* juliaTermCoeffs = jl_fieldref(juliaCallResult, 2); // Vector{Float64}
 
-        // Cast top-level array
-        jl_array_t* indexes = (jl_array_t*)v;
-        jl_array_t* coefficients = (jl_array_t*)c;
-        size_t numberRows = jl_array_len(indexes);
+        // Extract objectiveValue
+        double objectiveValue = jl_unbox_float64(juliaObj);
+        env->output->outputDebug(fmt::format("        Objective value: {}", objectiveValue));
 
-        for(size_t i = 0; i < numberRows; i++)
-        {
-            jl_value_t* rowIndexes = jl_arrayref(indexes, i); // Each row
-            jl_array_t* arrayIndexes = (jl_array_t*)rowIndexes;
+        // Convert variableIndexes to C++ vector<int64_t>
+        jl_array_t* juliaArrayVarIndexes = (jl_array_t*)juliaVarIndexes;
+        size_t numVarIndexes = jl_array_len(juliaArrayVarIndexes);
+        int64_t* arrayVarIndexes = jl_array_data(juliaArrayVarIndexes, int64_t);
 
-            jl_value_t* rowCoefficients = jl_arrayref(coefficients, i); // Each row
-            jl_array_t* arrayCoefficients = (jl_array_t*)rowCoefficients;
+        std::vector<int64_t> variableIndexes(arrayVarIndexes, arrayVarIndexes + numVarIndexes);
 
-            size_t nColumns = jl_array_len(arrayIndexes);
-            for(size_t j = 0; j < nColumns; j++)
-            {
-                jl_value_t* cellIndexes = jl_arrayref(arrayIndexes, j); // Each cell
-                jl_array_t* arrayIndexes = (jl_array_t*)cellIndexes;
+        // Convert termCoefficients to C++ vector<double>
+        jl_array_t* juliaArrayTermCoeffs = (jl_array_t*)juliaTermCoeffs;
+        size_t numTermCoeffs = jl_array_len(juliaArrayTermCoeffs);
+        double* arrayTermCoeffs = jl_array_data(juliaArrayTermCoeffs, double);
 
-                jl_value_t* cellCoefficients = jl_arrayref(arrayCoefficients, j); // Each cell
+        std::vector<double> termCoefficients(arrayTermCoeffs, arrayTermCoeffs + numTermCoeffs);
 
-                size_t numberOfIndexes = jl_array_len(arrayIndexes);
+        /*std::cout << "Variable indexes: ";
+        for(auto v : variableIndexes)
+            std::cout << v << " ";
 
-                std::cout << "[" << i << "][" << j << "] = [";
+        std::cout << "\nTerm coefficients: ";
+        for(auto c : termCoefficients)
+            std::cout << std::setprecision(15) << c << " ";
 
-                if(numberOfIndexes > 0)
-                {
-                    auto variableIndex = jl_unbox_int64(jl_arrayref(arrayIndexes, 0));
-                    // jl_array_t* arrayCoefficients = (jl_array_t*)cellCoefficients;
-                    auto variableCoefficient = jl_unbox_float64(cellCoefficients);
-                    std::cout << variableCoefficient << "*x[" << variableIndex << "]";
-                }
-                else
-                {
-                    auto variableCoefficient = jl_unbox_float64(cellCoefficients);
-                    std::cout << variableCoefficient;
-                }
+        std::cout << std::endl;*/
 
-                std::cout << "]\n";
+        std::map<int, double> elements;
 
-                Hyperplane hyperplane;
-                // hyperplane.sourceConstraint = NCV.constraint;
-                // hyperplane.sourceConstraintIndex = NCV.constraint->index;
-                hyperplane.generatedPoint = solPoints.at(i).point;
-                hyperplane.isSourceConvex = (NCV.constraint->properties.convexity <= E_Convexity::Convex);
+        for(size_t i = 0; i < variableIndexes.size(); ++i)
+            elements[variableIndexes[i] - 1] = -termCoefficients[i]; // -1 to match C++ indexing
 
-                hyperplane.source = E_HyperplaneSource::External;
-
-                env->dualSolver->addHyperplane(hyperplane);
-
-                addedHyperplanes++;
-
-                // env->output->outputDebug(
-                //    fmt::format("         Added hyperplane for constraint {} to waiting list with deviation {}",
-                //        NCV.constraint->name, NCV.error));
-            }
-        }
+        env->dualSolver->MIPSolver->addLinearConstraint(
+            elements, -termCoefficients.back(), fmt::format("lh_{0}", prevIter->iterationNumber), false, false);
     }
     else
     {
-        std::cerr << "Unexpected return type." << std::endl;
+        env->output->outputError(fmt::format("        Unexpected return type from Julia."));
     }
-
-    /*auto currIter = env->results->getCurrentIteration(); // The unsolved new iteration
-
-    if(!currIter->isMIP() || !env->settings->getSetting<bool>("HyperplaneCuts.Delay", "Dual")
-        || !currIter->MIPSolutionLimitUpdated || itersWithoutAddedHPs > 5)
-    {
-        int addedHyperplanes = 0;
-
-        for(auto k = env->dualSolver->hyperplaneWaitingList.size(); k > 0; k--)
-        {
-            if(addedHyperplanes >= env->settings->getSetting<int>("HyperplaneCuts.MaxPerIteration", "Dual"))
-                break;
-
-            auto tmpItem = env->dualSolver->hyperplaneWaitingList.at(k - 1);
-
-            bool cutAddedSuccessfully = false;
-
-            if(tmpItem.source == E_HyperplaneSource::PrimalSolutionSearchInteriorObjective)
-            {
-                cutAddedSuccessfully = env->dualSolver->MIPSolver->createInteriorHyperplane(tmpItem);
-            }
-            else
-            {
-                cutAddedSuccessfully = env->dualSolver->MIPSolver->createHyperplane(tmpItem);
-            }
-
-            if(cutAddedSuccessfully)
-            {
-                env->dualSolver->addGeneratedHyperplane(tmpItem);
-                addedHyperplanes++;
-                this->itersWithoutAddedHPs = 0;
-
-                env->output->outputDebug(
-                    fmt::format("        Cut added successfully for constraint {}.", tmpItem.sourceConstraintIndex));
-            }
-            else
-            {
-                env->output->outputDebug(fmt::format(
-                    "        Cut not added successfully for constraint {}.", tmpItem.sourceConstraintIndex));
-            }
-        }
-
-        if(!env->settings->getSetting<bool>("TreeStrategy.Multi.Reinitialize", "Dual"))
-        {
-            env->dualSolver->hyperplaneWaitingList.clear();
-        }
-    }
-    else
-    {
-        this->itersWithoutAddedHPs++;
-    }*/
 
     env->timing->stopTimer("DualStrategy");
 }

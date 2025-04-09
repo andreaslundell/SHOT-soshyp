@@ -25,5 +25,6 @@ public:
 
 private:
     int itersWithoutAddedHPs;
+    VectorString variableNames;
 };
 } // namespace SHOT

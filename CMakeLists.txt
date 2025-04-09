@@ -68,7 +68,7 @@ set(IPOPT_DIR "/opt/ipopt" CACHE STRING "The base directory where Ipopt is locat
 
 # Julia
 option(HAS_JULIA "Is Julia available" OFF)
-set(JULIA_DIR "/opt/julia")
+set(JULIA_DIR "/opt/julia-1.11.4")
 
 # Create also the executable
 option(GENERATE_EXE "Should the SHOT executable be generated (requires at least that either OS or GAMS is available)"
@@ -759,7 +759,11 @@ target_link_libraries(SHOTSolver CXX::Filesystem)
 
 # Link the Julia library
 if(HAS_JULIA)
-    target_include_directories(SHOTSolver PRIVATE ${JULIA_INCLUDE_DIRS})
+
+    message("-- Julia include files will be used from: ${JULIA_INCLUDE_DIR}")
+    target_include_directories(SHOTSolver PRIVATE ${JULIA_INCLUDE_DIR})
+
+    message("-- The following Julia library will be used:" ${JULIA_LIBRARY})
     target_link_libraries(SHOTSolver ${JULIA_LIBRARY})
 endif(HAS_JULIA)
 
@@ -832,11 +836,14 @@ install(
     DESTINATION bin
 )
 
-configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Tasks/LasserreHierarchyCuts.jl
-    ${CMAKE_BINARY_DIR}/LasserreHierarchyCuts.jl
-    COPYONLY
-)
+#configure_file(
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/Tasks/LasserreHierarchyCuts.jl
+#    ${CMAKE_BINARY_DIR}/LasserreHierarchyCuts.jl
+#    COPYONLY
+#)
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/soshyp/
+     DESTINATION ${CMAKE_BINARY_DIR}/soshyp)
 
 # Need to install the library as well
 install(TARGETS SHOTSolver DESTINATION lib)

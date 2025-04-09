@@ -35,6 +35,7 @@ TaskAddHyperplanes::~TaskAddHyperplanes() = default;
 
 void TaskAddHyperplanes::run()
 {
+    return;
     env->timing->startTimer("DualStrategy");
 
     auto currIter = env->results->getCurrentIteration(); // The unsolved new iteration
