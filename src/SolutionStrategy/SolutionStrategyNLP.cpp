@@ -114,8 +114,8 @@ SolutionStrategyNLP::SolutionStrategyNLP(EnvironmentPtr envPtr)
     auto tAddHPs = std::make_shared<TaskAddHyperplanes>(env);
     env->tasks->addTask(tAddHPs, "AddHPs");
 
-    auto tAddHPsLasserreHierarchy = std::make_shared<TaskAddHyperplanesLasserreHierarchy>(env);
-    env->tasks->addTask(tAddHPsLasserreHierarchy, "AddHPsLasserreHierarchy");
+    // auto tAddHPsLasserreHierarchy = std::make_shared<TaskAddHyperplanesLasserreHierarchy>(env);
+    // env->tasks->addTask(tAddHPsLasserreHierarchy, "AddHPsLasserreHierarchy");
 
     if(static_cast<ES_MIPPresolveStrategy>(env->settings->getSetting<int>("MIP.Presolve.Frequency", "Dual"))
         != ES_MIPPresolveStrategy::Never)
@@ -210,7 +210,7 @@ SolutionStrategyNLP::SolutionStrategyNLP(EnvironmentPtr envPtr)
     }
 
     env->tasks->addTask(tAddHPs, "AddHPs");
-    env->tasks->addTask(tAddHPsLasserreHierarchy, "AddHPs");
+    // env->tasks->addTask(tAddHPsLasserreHierarchy, "AddHPs");
 
     auto tGoto = std::make_shared<TaskGoto>(env, "SolveIter");
     env->tasks->addTask(tGoto, "Goto");

@@ -170,6 +170,15 @@ void TaskAddHyperplanesLasserreHierarchy::run()
 
         env->dualSolver->MIPSolver->addLinearConstraint(
             elements, -termCoefficients.back(), fmt::format("lh_{0}", prevIter->iterationNumber), false, false);
+
+        // Hyperplane newHyperplane;
+        /*newHyperplane.sourceConstraint = env->dualSolver->MIPSolver->getLastConstraint();
+        newHyperplane.sourceConstraintIndex = prevIter->iterationNumber;
+        newHyperplane.generatedPoint;
+        newHyperplane.source = E_HyperplaneSource::LasserreHierarchy;
+        newHyperplane.isObjectiveHyperplane = false;
+        newHyperplane.isSourceConvex = false;
+        newHyperplane.pointHash = Utilities::hashVector(newHyperplane.generatedPoint);*/
     }
     else
     {

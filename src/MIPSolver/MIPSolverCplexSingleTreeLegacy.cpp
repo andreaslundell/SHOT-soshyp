@@ -518,7 +518,7 @@ void CtCallbackI::main()
     solution.clear();
 }
 
-bool CtCallbackI::createHyperplane(Hyperplane hyperplane)
+bool CtCallbackI::createHyperplane(HyperplanePtr hyperplane)
 {
     auto optional = env->dualSolver->MIPSolver->createHyperplaneTerms(hyperplane);
 
@@ -577,7 +577,7 @@ bool CtCallbackI::createHyperplane(Hyperplane hyperplane)
         expr.end();
 
         if(env->settings->getSetting<bool>("Cplex.AddRelaxedLazyConstraintsAsLocal", "Subsolver")
-            && hyperplane.source == E_HyperplaneSource::MIPCallbackRelaxed)
+            && hyperplane->source == E_HyperplaneSource::MIPCallbackRelaxed)
         {
             addLocal(tmpRange).end();
         }
@@ -585,11 +585,6 @@ bool CtCallbackI::createHyperplane(Hyperplane hyperplane)
         {
             add(tmpRange, IloCplex::CutManagement::UseCutForce).end();
         }
-
-        std::string identifier = env->dualSolver->MIPSolver->getConstraintIdentifier(hyperplane.source);
-
-        if(hyperplane.sourceConstraint != nullptr)
-            identifier = identifier + "_" + hyperplane.sourceConstraint->name;
 
         env->dualSolver->addGeneratedHyperplane(hyperplane);
 

@@ -478,7 +478,7 @@ void GurobiCallbackSingleTree::callback()
     }
 }
 
-bool GurobiCallbackSingleTree::createHyperplane(Hyperplane hyperplane)
+bool GurobiCallbackSingleTree::createHyperplane(HyperplanePtr hyperplane)
 {
     try
     {
@@ -492,15 +492,33 @@ bool GurobiCallbackSingleTree::createHyperplane(Hyperplane hyperplane)
 
         auto tmpPair = optionalHyperplanes.value();
 
-        for(auto& E : tmpPair.first)
+        if(auto numericHyperplane = std::dynamic_pointer_cast<NumericHyperplane>(hyperplane))
         {
-            if(E.second != E.second) // Check for NaN
+            for(auto& E : tmpPair.first)
             {
-                env->output->outputError("        Warning: hyperplane for constraint "
-                    + std::to_string(hyperplane.sourceConstraint->index)
-                    + " not generated, NaN found in linear terms for variable "
-                    + env->problem->getVariable(E.first)->name);
-                return (false);
+                if(E.second != E.second || std::isinf(E.second)) // Check for NaN or inf
+                {
+                    env->output->outputError("        Warning: hyperplane not generated, NaN or inf "
+                                             "found in linear terms for "
+                        + env->reformulatedProblem->getVariable(E.first)->name + " = "
+                        + std::to_string(numericHyperplane->generatedPoint.at(E.first)));
+
+                    return (false);
+                }
+            }
+        }
+        else if(auto externalHyperplane = std::dynamic_pointer_cast<ExternalHyperplane>(hyperplane))
+        {
+            for(auto& E : tmpPair.first)
+            {
+                if(E.second != E.second || std::isinf(E.second)) // Check for NaN or inf
+                {
+                    env->output->outputError("        Warning: external hyperplane not generated, NaN or inf "
+                                             "found in linear terms for "
+                        + env->reformulatedProblem->getVariable(E.first)->name);
+
+                    return (false);
+                }
             }
         }
 
