@@ -533,7 +533,8 @@ void TaskSelectPrimalCandidatesFromNLP::createInfeasibilityCut(const VectorDoubl
         if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
             == ES_HyperplaneCutStrategy::ESH)
             taskSelectHPPts = std::make_shared<TaskSelectHyperplanePointsESH>(env);
-        else
+        else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
+            == ES_HyperplaneCutStrategy::ECP)
             taskSelectHPPts = std::make_shared<TaskSelectHyperplanePointsECP>(env);
     }
 
@@ -542,7 +543,8 @@ void TaskSelectPrimalCandidatesFromNLP::createInfeasibilityCut(const VectorDoubl
     {
         std::dynamic_pointer_cast<TaskSelectHyperplanePointsESH>(taskSelectHPPts)->run(solutionPoints);
     }
-    else
+    else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
+        == ES_HyperplaneCutStrategy::ECP)
     {
         std::dynamic_pointer_cast<TaskSelectHyperplanePointsECP>(taskSelectHPPts)->run(solutionPoints);
     }

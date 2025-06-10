@@ -40,7 +40,8 @@ CplexCallback::CplexCallback(EnvironmentPtr envPtr, const IloNumVarArray& vars, 
             tUpdateInteriorPoint = std::make_shared<TaskUpdateInteriorPoint>(env);
             taskSelectHPPts = std::make_shared<TaskSelectHyperplanePointsESH>(env);
         }
-        else
+        else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
+            == ES_HyperplaneCutStrategy::ECP)
         {
             taskSelectHPPts = std::make_shared<TaskSelectHyperplanePointsECP>(env);
         }
@@ -51,6 +52,8 @@ CplexCallback::CplexCallback(EnvironmentPtr envPtr, const IloNumVarArray& vars, 
     {
         taskSelectHPPtsByObjectiveRootsearch = std::make_shared<TaskSelectHyperplanePointsObjectiveFunction>(env);
     }
+
+    taskSelectExternalHPs = std::make_shared<TaskSelectHyperplanesExternal>(env);
 
     auto NLPProblemSource = static_cast<ES_PrimalNLPProblemSource>(
         env->settings->getSetting<int>("FixedInteger.SourceProblem", "Primal"));
@@ -211,7 +214,8 @@ void CplexCallback::invoke(const IloCplex::Callback::Context& context)
                         tUpdateInteriorPoint->run();
                         static_cast<TaskSelectHyperplanePointsESH*>(taskSelectHPPts.get())->run(solutionPoints);
                     }
-                    else
+                    else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
+                        == ES_HyperplaneCutStrategy::ECP)
                     {
                         static_cast<TaskSelectHyperplanePointsECP*>(taskSelectHPPts.get())->run(solutionPoints);
                     }
@@ -221,6 +225,8 @@ void CplexCallback::invoke(const IloCplex::Callback::Context& context)
                     {
                         taskSelectHPPtsByObjectiveRootsearch->run(solutionPoints);
                     }
+
+                    taskSelectExternalHPs->run(solutionPoints);
 
                     env->results->getCurrentIteration()->relaxedLazyHyperplanesAdded
                         += (env->dualSolver->hyperplaneWaitingList.size() - waitingListSize);
@@ -559,7 +565,8 @@ void CplexCallback::addLazyConstraint(
                 tUpdateInteriorPoint->run();
                 static_cast<TaskSelectHyperplanePointsESH*>(taskSelectHPPts.get())->run(candidatePoints);
             }
-            else
+            else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
+                == ES_HyperplaneCutStrategy::ECP)
             {
                 static_cast<TaskSelectHyperplanePointsECP*>(taskSelectHPPts.get())->run(candidatePoints);
             }
@@ -570,6 +577,8 @@ void CplexCallback::addLazyConstraint(
         {
             taskSelectHPPtsByObjectiveRootsearch->run(candidatePoints);
         }
+
+        taskSelectExternalHPs->run(candidatePoints);
 
         for(auto& hp : env->dualSolver->hyperplaneWaitingList)
         {

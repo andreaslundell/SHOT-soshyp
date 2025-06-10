@@ -40,7 +40,8 @@ HCallbackI::HCallbackI(EnvironmentPtr envPtr, IloEnv iloEnv, IloNumVarArray xx2)
         tUpdateInteriorPoint = std::make_shared<TaskUpdateInteriorPoint>(env);
         taskSelectHPPts = std::make_shared<TaskSelectHyperplanePointsESH>(env);
     }
-    else
+    else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
+        == ES_HyperplaneCutStrategy::ECP)
     {
         taskSelectHPPts = std::make_shared<TaskSelectHyperplanePointsECP>(env);
     }
@@ -50,6 +51,8 @@ HCallbackI::HCallbackI(EnvironmentPtr envPtr, IloEnv iloEnv, IloNumVarArray xx2)
     {
         taskSelectHPPtsByObjectiveRootsearch = std::make_shared<TaskSelectHyperplanePointsObjectiveFunction>(env);
     }
+
+    taskSelectExternalHPs = std::make_shared<TaskSelectHyperplanesExternal>(env);
 }
 
 IloCplex::CallbackI* HCallbackI::duplicateCallback() const { return (new(getEnv()) HCallbackI(*this)); }
@@ -145,10 +148,13 @@ void HCallbackI::main() // Called at each node...
         {
             static_cast<TaskSelectHyperplanePointsESH*>(taskSelectHPPts.get())->run(solutionPoints);
         }
-        else
+        else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
+            == ES_HyperplaneCutStrategy::ECP)
         {
             static_cast<TaskSelectHyperplanePointsECP*>(taskSelectHPPts.get())->run(solutionPoints);
         }
+
+        taskSelectExternalHPs->run(solutionPoints);
 
         env->results->getCurrentIteration()->relaxedLazyHyperplanesAdded
             += (env->dualSolver->hyperplaneWaitingList.size() - waitingListSize);
@@ -227,11 +233,14 @@ CtCallbackI::CtCallbackI(EnvironmentPtr envPtr, IloEnv iloEnv, IloNumVarArray xx
             tUpdateInteriorPoint = std::make_shared<TaskUpdateInteriorPoint>(env);
             taskSelectHPPts = std::make_shared<TaskSelectHyperplanePointsESH>(env);
         }
-        else
+        else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
+            == ES_HyperplaneCutStrategy::ECP)
         {
             taskSelectHPPts = std::make_shared<TaskSelectHyperplanePointsECP>(env);
         }
     }
+
+    taskSelectExternalHPs = std::make_shared<TaskSelectHyperplanesExternal>(env);
 
     auto NLPProblemSource = static_cast<ES_PrimalNLPProblemSource>(
         env->settings->getSetting<int>("FixedInteger.SourceProblem", "Primal"));
@@ -475,7 +484,8 @@ void CtCallbackI::main()
             tUpdateInteriorPoint->run();
             static_cast<TaskSelectHyperplanePointsESH*>(taskSelectHPPts.get())->run(candidatePoints);
         }
-        else
+        else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
+            == ES_HyperplaneCutStrategy::ECP)
         {
             static_cast<TaskSelectHyperplanePointsECP*>(taskSelectHPPts.get())->run(candidatePoints);
         }
@@ -486,6 +496,8 @@ void CtCallbackI::main()
     {
         taskSelectHPPtsByObjectiveRootsearch->run(candidatePoints);
     }
+
+    taskSelectExternalHPs->run(candidatePoints);
 
     for(auto& hp : env->dualSolver->hyperplaneWaitingList)
     {

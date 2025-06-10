@@ -334,7 +334,8 @@ void GurobiCallbackSingleTree::callback()
                     tUpdateInteriorPoint->run();
                     static_cast<TaskSelectHyperplanePointsESH*>(taskSelectHPPts.get())->run(solutionPoints);
                 }
-                else
+                else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
+                    == ES_HyperplaneCutStrategy::ECP)
                 {
                     static_cast<TaskSelectHyperplanePointsECP*>(taskSelectHPPts.get())->run(solutionPoints);
                 }
@@ -344,6 +345,8 @@ void GurobiCallbackSingleTree::callback()
                 {
                     taskSelectHPPtsByObjectiveRootsearch->run(solutionPoints);
                 }
+
+                taskSelectExternalHPs->run(solutionPoints);
 
                 env->results->getCurrentIteration()->relaxedLazyHyperplanesAdded
                     += (env->dualSolver->hyperplaneWaitingList.size() - waitingListSize);
@@ -582,11 +585,14 @@ GurobiCallbackSingleTree::GurobiCallbackSingleTree(GRBVar* xvars, EnvironmentPtr
             tUpdateInteriorPoint = std::make_shared<TaskUpdateInteriorPoint>(env);
             taskSelectHPPts = std::make_shared<TaskSelectHyperplanePointsESH>(env);
         }
-        else
+        else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
+            == ES_HyperplaneCutStrategy::ECP)
         {
             taskSelectHPPts = std::make_shared<TaskSelectHyperplanePointsECP>(env);
         }
     }
+
+    taskSelectExternalHPs = std::make_shared<TaskSelectHyperplanesExternal>(env);
 
     auto NLPProblemSource = static_cast<ES_PrimalNLPProblemSource>(
         env->settings->getSetting<int>("FixedInteger.SourceProblem", "Primal"));
@@ -677,7 +683,8 @@ void GurobiCallbackSingleTree::addLazyConstraint(std::vector<SolutionPoint> cand
                 tUpdateInteriorPoint->run();
                 static_cast<TaskSelectHyperplanePointsESH*>(taskSelectHPPts.get())->run(candidatePoints);
             }
-            else
+            else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
+                == ES_HyperplaneCutStrategy::ECP)
             {
                 static_cast<TaskSelectHyperplanePointsECP*>(taskSelectHPPts.get())->run(candidatePoints);
             }
@@ -688,6 +695,8 @@ void GurobiCallbackSingleTree::addLazyConstraint(std::vector<SolutionPoint> cand
         {
             taskSelectHPPtsByObjectiveRootsearch->run(candidatePoints);
         }
+
+        taskSelectExternalHPs->run(candidatePoints);
 
         for(auto& hp : env->dualSolver->hyperplaneWaitingList)
         {

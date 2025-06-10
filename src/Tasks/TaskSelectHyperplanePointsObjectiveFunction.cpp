@@ -47,7 +47,7 @@ void TaskSelectHyperplanePointsObjectiveFunction::run(std::vector<SolutionPoint>
     if(env->solutionStatistics.numberOfIterationsWithDualStagnation > 2
         && env->reformulatedProblem->properties.convexity == E_ProblemConvexity::Convex)
     {
-        ObjectiveHyperplanePtr hyperplane;
+        ObjectiveHyperplanePtr hyperplane = std::make_shared<ObjectiveHyperplane>();
         hyperplane->generatedPoint = sourcePoints[0].point;
         hyperplane->source = E_HyperplaneSource::ObjectiveRootsearch;
         hyperplane->objectiveFunctionValue
@@ -121,7 +121,7 @@ void TaskSelectHyperplanePointsObjectiveFunction::run(std::vector<SolutionPoint>
                         env->reformulatedProblem->objectiveFunction);
                 }
 
-                ObjectiveHyperplanePtr hyperplane;
+                ObjectiveHyperplanePtr hyperplane = std::make_shared<ObjectiveHyperplane>();
                 hyperplane->source = E_HyperplaneSource::ObjectiveRootsearch;
                 hyperplane->generatedPoint = SOLPT.point;
                 hyperplane->objectiveFunctionValue = rootBound.second;
@@ -143,7 +143,7 @@ void TaskSelectHyperplanePointsObjectiveFunction::run(std::vector<SolutionPoint>
             }
         }
 
-        ObjectiveHyperplanePtr hyperplane;
+        ObjectiveHyperplanePtr hyperplane = std::make_shared<ObjectiveHyperplane>();
         hyperplane->generatedPoint = SOLPT.point;
         hyperplane->source = E_HyperplaneSource::ObjectiveCuttingPlane;
         hyperplane->isGlobal = isConvex;

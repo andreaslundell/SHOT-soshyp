@@ -168,24 +168,28 @@ void TaskAddHyperplanesLasserreHierarchy::run()
         for(size_t i = 0; i < variableIndexes.size(); ++i)
             elements[variableIndexes[i] - 1] = -termCoefficients[i]; // -1 to match C++ indexing
 
-        env->dualSolver->MIPSolver->addLinearConstraint(
-            elements, -termCoefficients.back(), fmt::format("lh_{0}", prevIter->iterationNumber), false, false);
+        // env->dualSolver->MIPSolver->addLinearConstraint(
+        //     elements, -termCoefficients.back(), fmt::format("lh_{0}", prevIter->iterationNumber), false, false);
 
-        // Hyperplane newHyperplane;
-        /*newHyperplane.sourceConstraint = env->dualSolver->MIPSolver->getLastConstraint();
-        newHyperplane.sourceConstraintIndex = prevIter->iterationNumber;
-        newHyperplane.generatedPoint;
-        newHyperplane.source = E_HyperplaneSource::LasserreHierarchy;
-        newHyperplane.isObjectiveHyperplane = false;
-        newHyperplane.isSourceConvex = false;
-        newHyperplane.pointHash = Utilities::hashVector(newHyperplane.generatedPoint);*/
+        std::vector<int> variableIndexesInt;
+        std::transform(variableIndexes.begin(), variableIndexes.end(), std::back_inserter(variableIndexesInt),
+            [](int64_t value) { return static_cast<int>(value - 1); });
+
+        auto hyperplane = std::make_shared<ExternalHyperplane>();
+        hyperplane->source = E_HyperplaneSource::External;
+        hyperplane->variableIndexes = variableIndexesInt;
+        hyperplane->variableCoefficients = termCoefficients;
+        hyperplane->rhsValue = -termCoefficients.back();
+        hyperplane->description = fmt::format("lh_{0}", prevIter->iterationNumber);
+
+        env->dualSolver->addHyperplane(hyperplane);
+
+        env->timing->stopTimer("DualStrategy");
     }
     else
     {
         env->output->outputError(fmt::format("        Unexpected return type from Julia."));
     }
-
-    env->timing->stopTimer("DualStrategy");
 }
 
 std::string TaskAddHyperplanesLasserreHierarchy::getType()

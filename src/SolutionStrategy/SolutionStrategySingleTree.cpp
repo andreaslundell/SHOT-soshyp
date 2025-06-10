@@ -50,6 +50,7 @@
 #include "../Tasks/TaskInitializeRootsearch.h"
 #include "../Tasks/TaskSelectHyperplanePointsESH.h"
 #include "../Tasks/TaskSelectHyperplanePointsECP.h"
+#include "../Tasks/TaskSelectHyperplanesExternal.h"
 #include "../Tasks/TaskAddHyperplanes.h"
 #include "../Tasks/TaskAddPrimalReductionCut.h"
 #include "../Tasks/TaskCheckMaxNumberOfPrimalReductionCuts.h"
@@ -90,6 +91,8 @@ SolutionStrategySingleTree::SolutionStrategySingleTree(EnvironmentPtr envPtr)
     env->timing->createTimer("PrimalStrategy", "- primal strategy");
     env->timing->createTimer("PrimalBoundStrategyNLP", "  - solving NLP problems");
     env->timing->createTimer("PrimalBoundStrategyRootSearch", "  - performing root searches");
+
+    env->timing->createTimer("CallbackExternalHyperplaneGeneration", "  - callback: external hyperplane generation");
 
     auto tFinalizeSolution = std::make_shared<TaskSequential>(env);
 
@@ -247,7 +250,8 @@ SolutionStrategySingleTree::SolutionStrategySingleTree(EnvironmentPtr envPtr)
             auto tSelectHPPts = std::make_shared<TaskSelectHyperplanePointsESH>(env);
             env->tasks->addTask(tSelectHPPts, "SelectHPPts");
         }
-        else
+        else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
+            == ES_HyperplaneCutStrategy::ECP)
         {
             auto tSelectHPPts = std::make_shared<TaskSelectHyperplanePointsECP>(env);
             env->tasks->addTask(tSelectHPPts, "SelectHPPts");
@@ -260,6 +264,9 @@ SolutionStrategySingleTree::SolutionStrategySingleTree(EnvironmentPtr envPtr)
         auto tSelectObjectiveHPPts = std::make_shared<TaskSelectHyperplanePointsObjectiveFunction>(env);
         env->tasks->addTask(tSelectObjectiveHPPts, "SelectObjectiveHPPts");
     }
+
+    auto tSelectExternalHPs = std::make_shared<TaskSelectHyperplanesExternal>(env);
+    env->tasks->addTask(tSelectExternalHPs, "SelectExternalHPs");
 
     env->tasks->addTask(tAddHPs, "AddHPs");
 

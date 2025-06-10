@@ -226,6 +226,7 @@ file(
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSequential.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckIterationError.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskRepairInfeasibleDualProblem.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanesExternal.h"
     "${PROJECT_SOURCE_DIR}/src/Settings.h"
     "${TINYXML2_DIR}/tinyxml2.h"
     #"${CPPAD_DIR}/include/cppad/cppad.hpp"
@@ -592,6 +593,8 @@ add_library(
     ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsECP.h
     ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsESH.cpp
     ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsESH.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanesExternal.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanesExternal.h
     ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsObjectiveFunction.cpp
     ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsObjectiveFunction.h
     ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalCandidatesFromNLP.cpp

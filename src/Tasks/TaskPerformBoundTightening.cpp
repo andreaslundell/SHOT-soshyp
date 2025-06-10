@@ -24,9 +24,6 @@
 #include "../Model/Problem.h"
 #include "../NLPSolver/INLPSolver.h"
 
-//#include "../Tasks/TaskSelectHyperplanePointsESH.h"
-//#include "../Tasks/TaskSelectHyperplanePointsECP.h"
-
 #include "../NLPSolver/NLPSolverSHOT.h"
 
 namespace SHOT

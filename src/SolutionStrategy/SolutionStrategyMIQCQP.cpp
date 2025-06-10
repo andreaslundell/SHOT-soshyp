@@ -47,6 +47,7 @@
 #include "../Tasks/TaskInitializeRootsearch.h"
 #include "../Tasks/TaskSelectHyperplanePointsESH.h"
 #include "../Tasks/TaskSelectHyperplanePointsECP.h"
+#include "../Tasks/TaskSelectHyperplanesExternal.h"
 #include "../Tasks/TaskAddHyperplanes.h"
 #include "../Tasks/TaskAddPrimalReductionCut.h"
 #include "../Tasks/TaskCheckMaxNumberOfPrimalReductionCuts.h"
@@ -77,6 +78,8 @@ SolutionStrategyMIQCQP::SolutionStrategyMIQCQP(EnvironmentPtr envPtr)
 
     env->timing->createTimer("PrimalStrategy", "- primal strategy");
     env->timing->createTimer("PrimalBoundStrategyNLP", "  - solving NLP problems");
+
+    env->timing->createTimer("CallbackExternalHyperplaneGeneration", "  - callback: external hyperplane generation");
 
     auto tFinalizeSolution = std::make_shared<TaskSequential>(env);
 

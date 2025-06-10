@@ -52,7 +52,8 @@ enum class E_DualSolutionSource
 enum class E_EventType
 {
     NewPrimalSolution,
-    UserTerminationCheck
+    UserTerminationCheck,
+    ExternalHyperplaneSelection,
 };
 
 enum class E_HyperplaneSource
@@ -282,7 +283,8 @@ enum class ES_EigenValueDecompositionFormulation
 enum class ES_HyperplaneCutStrategy
 {
     ESH,
-    ECP
+    ECP,
+    OnlyExternal
 };
 
 enum class ES_IpoptSolver
