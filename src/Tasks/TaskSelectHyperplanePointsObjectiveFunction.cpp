@@ -8,7 +8,7 @@
    Please see the README and LICENSE files for more information.
 */
 
-#include "TaskSelectHyperplanePointsObjectiveFunction.h"
+#include "TaskSelectHyperplanesObjectiveFunction.h"
 
 #include "../DualSolver.h"
 #include "../Output.h"
@@ -24,19 +24,15 @@
 namespace SHOT
 {
 
-TaskSelectHyperplanePointsObjectiveFunction::TaskSelectHyperplanePointsObjectiveFunction(EnvironmentPtr envPtr)
-    : TaskBase(envPtr)
+TaskSelectHyperplanesObjectiveFunction::TaskSelectHyperplanesObjectiveFunction(EnvironmentPtr envPtr) : TaskBase(envPtr)
 {
 }
 
-TaskSelectHyperplanePointsObjectiveFunction::~TaskSelectHyperplanePointsObjectiveFunction() = default;
+TaskSelectHyperplanesObjectiveFunction::~TaskSelectHyperplanesObjectiveFunction() = default;
 
-void TaskSelectHyperplanePointsObjectiveFunction::run()
-{
-    this->run(env->results->getPreviousIteration()->solutionPoints);
-}
+void TaskSelectHyperplanesObjectiveFunction::run() { this->run(env->results->getPreviousIteration()->solutionPoints); }
 
-void TaskSelectHyperplanePointsObjectiveFunction::run(std::vector<SolutionPoint> sourcePoints)
+void TaskSelectHyperplanesObjectiveFunction::run(std::vector<SolutionPoint> sourcePoints)
 {
     if(sourcePoints.size() == 0)
         return;
@@ -166,7 +162,7 @@ void TaskSelectHyperplanePointsObjectiveFunction::run(std::vector<SolutionPoint>
     }
 }
 
-std::string TaskSelectHyperplanePointsObjectiveFunction::getType()
+std::string TaskSelectHyperplanesObjectiveFunction::getType()
 {
     std::string type = typeid(this).name();
     return (type);

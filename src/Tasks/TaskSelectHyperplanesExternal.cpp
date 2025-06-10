@@ -38,6 +38,9 @@ void TaskSelectHyperplanesExternal::run() { this->run(env->results->getPreviousI
 void TaskSelectHyperplanesExternal::run(std::vector<SolutionPoint> solutionPoints)
 {
     env->timing->startTimer("CallbackExternalHyperplaneGeneration");
+
+    env->output->outputDebug("        Selecting cutting planes using external callback functionality:");
+
     env->events->notify(E_EventType::ExternalHyperplaneSelection, solutionPoints);
 
     /*

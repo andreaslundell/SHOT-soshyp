@@ -7,7 +7,7 @@
    This software is licensed under the Eclipse Public License 2.0.
    Please see the README and LICENSE files for more information.
 */
-#include "TaskSelectHyperplanePointsECP.h"
+#include "TaskSelectHyperplanesECP.h"
 
 #include "../DualSolver.h"
 #include "../MIPSolver/IMIPSolver.h"
@@ -22,17 +22,17 @@
 namespace SHOT
 {
 
-TaskSelectHyperplanePointsECP::TaskSelectHyperplanePointsECP(EnvironmentPtr envPtr) : TaskBase(envPtr)
+TaskSelectHyperplanesECP::TaskSelectHyperplanesECP(EnvironmentPtr envPtr) : TaskBase(envPtr)
 {
     env->timing->startTimer("DualCutGenerationRootSearch");
     env->timing->stopTimer("DualCutGenerationRootSearch");
 }
 
-TaskSelectHyperplanePointsECP::~TaskSelectHyperplanePointsECP() = default;
+TaskSelectHyperplanesECP::~TaskSelectHyperplanesECP() = default;
 
-void TaskSelectHyperplanePointsECP::run() { this->run(env->results->getPreviousIteration()->solutionPoints); }
+void TaskSelectHyperplanesECP::run() { this->run(env->results->getPreviousIteration()->solutionPoints); }
 
-void TaskSelectHyperplanePointsECP::run(std::vector<SolutionPoint> solPoints)
+void TaskSelectHyperplanesECP::run(std::vector<SolutionPoint> solPoints)
 {
     if(env->reformulatedProblem->properties.numberOfNonlinearConstraints == 0)
         return;
@@ -247,7 +247,7 @@ void TaskSelectHyperplanePointsECP::run(std::vector<SolutionPoint> solPoints)
     env->timing->stopTimer("DualCutGenerationRootSearch");
 }
 
-std::string TaskSelectHyperplanePointsECP::getType()
+std::string TaskSelectHyperplanesECP::getType()
 {
     std::string type = typeid(this).name();
     return (type);

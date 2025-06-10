@@ -45,8 +45,8 @@
 #include "../Tasks/TaskCheckUserTermination.h"
 
 #include "../Tasks/TaskInitializeRootsearch.h"
-#include "../Tasks/TaskSelectHyperplanePointsESH.h"
-#include "../Tasks/TaskSelectHyperplanePointsECP.h"
+#include "../Tasks/TaskSelectHyperplanesESH.h"
+#include "../Tasks/TaskSelectHyperplanesECP.h"
 #include "../Tasks/TaskSelectHyperplanesExternal.h"
 #include "../Tasks/TaskAddHyperplanes.h"
 
@@ -63,7 +63,7 @@
 
 #include "../Tasks/TaskUpdateInteriorPoint.h"
 
-#include "../Tasks/TaskSelectHyperplanePointsObjectiveFunction.h"
+#include "../Tasks/TaskSelectHyperplanesObjectiveFunction.h"
 
 #include "../Tasks/TaskAddIntegerCuts.h"
 
@@ -195,13 +195,13 @@ SolutionStrategyNLP::SolutionStrategyNLP(EnvironmentPtr envPtr)
             auto tUpdateInteriorPoint = std::make_shared<TaskUpdateInteriorPoint>(env);
             env->tasks->addTask(tUpdateInteriorPoint, "UpdateInteriorPoint");
 
-            auto tSelectHPPts = std::make_shared<TaskSelectHyperplanePointsESH>(env);
+            auto tSelectHPPts = std::make_shared<TaskSelectHyperplanesESH>(env);
             env->tasks->addTask(tSelectHPPts, "SelectHPPts");
         }
         else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
             == ES_HyperplaneCutStrategy::ECP)
         {
-            auto tSelectHPPts = std::make_shared<TaskSelectHyperplanePointsECP>(env);
+            auto tSelectHPPts = std::make_shared<TaskSelectHyperplanesECP>(env);
             env->tasks->addTask(tSelectHPPts, "SelectHPPts");
         }
     }
@@ -209,7 +209,7 @@ SolutionStrategyNLP::SolutionStrategyNLP(EnvironmentPtr envPtr)
     if(env->reformulatedProblem->objectiveFunction->properties.classification
         > E_ObjectiveFunctionClassification::Quadratic)
     {
-        auto tSelectObjectiveHPPts = std::make_shared<TaskSelectHyperplanePointsObjectiveFunction>(env);
+        auto tSelectObjectiveHPPts = std::make_shared<TaskSelectHyperplanesObjectiveFunction>(env);
         env->tasks->addTask(tSelectObjectiveHPPts, "SelectObjectiveHPPts");
     }
 

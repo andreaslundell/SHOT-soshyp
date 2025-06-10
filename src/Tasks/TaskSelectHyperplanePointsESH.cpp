@@ -8,7 +8,7 @@
    Please see the README and LICENSE files for more information.
 */
 
-#include "TaskSelectHyperplanePointsESH.h"
+#include "TaskSelectHyperplanesESH.h"
 
 #include "../DualSolver.h"
 #include "../MIPSolver/IMIPSolver.h"
@@ -20,23 +20,23 @@
 
 #include "../Model/Problem.h"
 
-#include "TaskSelectHyperplanePointsECP.h"
+#include "TaskSelectHyperplanesECP.h"
 #include "../RootsearchMethod/IRootsearchMethod.h"
 
 namespace SHOT
 {
 
-TaskSelectHyperplanePointsESH::TaskSelectHyperplanePointsESH(EnvironmentPtr envPtr) : TaskBase(envPtr)
+TaskSelectHyperplanesESH::TaskSelectHyperplanesESH(EnvironmentPtr envPtr) : TaskBase(envPtr)
 {
     env->timing->startTimer("DualCutGenerationRootSearch");
     env->timing->stopTimer("DualCutGenerationRootSearch");
 }
 
-TaskSelectHyperplanePointsESH::~TaskSelectHyperplanePointsESH() = default;
+TaskSelectHyperplanesESH::~TaskSelectHyperplanesESH() = default;
 
-void TaskSelectHyperplanePointsESH::run() { this->run(env->results->getPreviousIteration()->solutionPoints); }
+void TaskSelectHyperplanesESH::run() { this->run(env->results->getPreviousIteration()->solutionPoints); }
 
-void TaskSelectHyperplanePointsESH::run(std::vector<SolutionPoint> solPoints)
+void TaskSelectHyperplanesESH::run(std::vector<SolutionPoint> solPoints)
 {
     if(env->reformulatedProblem->properties.numberOfNonlinearConstraints == 0)
         return;
@@ -48,7 +48,7 @@ void TaskSelectHyperplanePointsESH::run(std::vector<SolutionPoint> solPoints)
     if(env->dualSolver->interiorPts.size() == 0)
     {
         if(!tSelectHPPts)
-            tSelectHPPts = std::make_unique<TaskSelectHyperplanePointsECP>(env);
+            tSelectHPPts = std::make_unique<TaskSelectHyperplanesECP>(env);
 
         env->output->outputDebug("         Adding cutting plane since no interior point is known.");
         tSelectHPPts->run(solPoints);
@@ -60,7 +60,7 @@ void TaskSelectHyperplanePointsESH::run(std::vector<SolutionPoint> solPoints)
         && env->reformulatedProblem->properties.convexity == E_ProblemConvexity::Convex)
     {
         if(!tSelectHPPts)
-            tSelectHPPts = std::make_unique<TaskSelectHyperplanePointsECP>(env);
+            tSelectHPPts = std::make_unique<TaskSelectHyperplanesECP>(env);
 
         env->output->outputDebug("         Adding cutting plane since the dual has stagnated.");
         tSelectHPPts->run(solPoints);
@@ -660,7 +660,7 @@ void TaskSelectHyperplanePointsESH::run(std::vector<SolutionPoint> solPoints)
     env->timing->stopTimer("DualCutGenerationRootSearch");
 }
 
-std::string TaskSelectHyperplanePointsESH::getType()
+std::string TaskSelectHyperplanesESH::getType()
 {
     std::string type = typeid(this).name();
     return (type);

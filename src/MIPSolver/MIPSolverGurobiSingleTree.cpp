@@ -332,12 +332,12 @@ void GurobiCallbackSingleTree::callback()
                     == ES_HyperplaneCutStrategy::ESH)
                 {
                     tUpdateInteriorPoint->run();
-                    static_cast<TaskSelectHyperplanePointsESH*>(taskSelectHPPts.get())->run(solutionPoints);
+                    static_cast<TaskSelectHyperplanesESH*>(taskSelectHPPts.get())->run(solutionPoints);
                 }
                 else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
                     == ES_HyperplaneCutStrategy::ECP)
                 {
-                    static_cast<TaskSelectHyperplanePointsECP*>(taskSelectHPPts.get())->run(solutionPoints);
+                    static_cast<TaskSelectHyperplanesECP*>(taskSelectHPPts.get())->run(solutionPoints);
                 }
 
                 if(env->reformulatedProblem->objectiveFunction->properties.classification
@@ -583,12 +583,12 @@ GurobiCallbackSingleTree::GurobiCallbackSingleTree(GRBVar* xvars, EnvironmentPtr
             == ES_HyperplaneCutStrategy::ESH)
         {
             tUpdateInteriorPoint = std::make_shared<TaskUpdateInteriorPoint>(env);
-            taskSelectHPPts = std::make_shared<TaskSelectHyperplanePointsESH>(env);
+            taskSelectHPPts = std::make_shared<TaskSelectHyperplanesESH>(env);
         }
         else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
             == ES_HyperplaneCutStrategy::ECP)
         {
-            taskSelectHPPts = std::make_shared<TaskSelectHyperplanePointsECP>(env);
+            taskSelectHPPts = std::make_shared<TaskSelectHyperplanesECP>(env);
         }
     }
 
@@ -612,7 +612,7 @@ GurobiCallbackSingleTree::GurobiCallbackSingleTree(GRBVar* xvars, EnvironmentPtr
     if(env->reformulatedProblem->objectiveFunction->properties.classification
         > E_ObjectiveFunctionClassification::Quadratic)
     {
-        taskSelectHPPtsByObjectiveRootsearch = std::make_shared<TaskSelectHyperplanePointsObjectiveFunction>(env);
+        taskSelectHPPtsByObjectiveRootsearch = std::make_shared<TaskSelectHyperplanesObjectiveFunction>(env);
     }
 
     if(env->settings->getSetting<bool>("Rootsearch.Use", "Primal")
@@ -681,12 +681,12 @@ void GurobiCallbackSingleTree::addLazyConstraint(std::vector<SolutionPoint> cand
                 == ES_HyperplaneCutStrategy::ESH)
             {
                 tUpdateInteriorPoint->run();
-                static_cast<TaskSelectHyperplanePointsESH*>(taskSelectHPPts.get())->run(candidatePoints);
+                static_cast<TaskSelectHyperplanesESH*>(taskSelectHPPts.get())->run(candidatePoints);
             }
             else if(static_cast<ES_HyperplaneCutStrategy>(env->settings->getSetting<int>("CutStrategy", "Dual"))
                 == ES_HyperplaneCutStrategy::ECP)
             {
-                static_cast<TaskSelectHyperplanePointsECP*>(taskSelectHPPts.get())->run(candidatePoints);
+                static_cast<TaskSelectHyperplanesECP*>(taskSelectHPPts.get())->run(candidatePoints);
             }
         }
 

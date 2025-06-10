@@ -17,11 +17,11 @@
 
 namespace SHOT
 {
-class TaskSelectHyperplanePointsObjectiveFunction : public TaskBase
+class TaskSelectHyperplanesObjectiveFunction : public TaskBase
 {
 public:
-    TaskSelectHyperplanePointsObjectiveFunction(EnvironmentPtr envPtr);
-    ~TaskSelectHyperplanePointsObjectiveFunction() override;
+    TaskSelectHyperplanesObjectiveFunction(EnvironmentPtr envPtr);
+    ~TaskSelectHyperplanesObjectiveFunction() override;
 
     void run() override;
     virtual void run(std::vector<SolutionPoint> solPoints);

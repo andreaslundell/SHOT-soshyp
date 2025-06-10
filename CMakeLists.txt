@@ -189,7 +189,7 @@ file(
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckAbsoluteGap.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckDualStagnation.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskInitializeRootsearch.h"
-    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsObjectiveFunction.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanesObjectiveFunction.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskFindInteriorPoint.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalFixedNLPPointsFromSolutionPool.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskPerformBoundTightening.h"
@@ -208,7 +208,7 @@ file(
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskException.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskAddHyperplanes.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckMaxNumberOfPrimalReductionCuts.h"
-    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsECP.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanesECP.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskUpdateInteriorPoint.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskExecuteSolutionLimitStrategy.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskInitializeDualSolver.h"
@@ -216,7 +216,7 @@ file(
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalCandidatesFromNLP.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckTimeLimit.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskClearFixedPrimalCandidates.h"
-    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsESH.h"
+    "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanesESH.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckUserTermination.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskCheckPrimalStagnation.h"
     "${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalCandidatesFromRootsearch.h"
@@ -589,14 +589,14 @@ add_library(
     ${PROJECT_SOURCE_DIR}/src/Tasks/TaskRepairInfeasibleDualProblem.h
     ${PROJECT_SOURCE_DIR}/src/Tasks/TaskRepairableBase.cpp
     ${PROJECT_SOURCE_DIR}/src/Tasks/TaskRepairableBase.h
-    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsECP.cpp
-    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsECP.h
-    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsESH.cpp
-    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsESH.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanesECP.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanesECP.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanesESH.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanesESH.h
     ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanesExternal.cpp
     ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanesExternal.h
-    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsObjectiveFunction.cpp
-    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanePointsObjectiveFunction.h
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanesObjectiveFunction.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectHyperplanesObjectiveFunction.h
     ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalCandidatesFromNLP.cpp
     ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalCandidatesFromNLP.h
     ${PROJECT_SOURCE_DIR}/src/Tasks/TaskSelectPrimalCandidatesFromRootsearch.cpp
