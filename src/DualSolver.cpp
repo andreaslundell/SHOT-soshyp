@@ -152,7 +152,7 @@ void DualSolver::addHyperplane(HyperplanePtr hyperplane)
     else if(auto externalHP = std::dynamic_pointer_cast<ExternalHyperplane>(hyperplane))
     {
         // TODO check for already added hyperplanes
-        this->hyperplaneWaitingList.push_back(hyperplane);
+        this->hyperplaneWaitingList.push_back(externalHP);
     }
 }
 

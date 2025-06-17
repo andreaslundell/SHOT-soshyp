@@ -265,6 +265,8 @@ std::optional<std::pair<std::map<int, double>, double>> MIPSolverBase::createHyp
     }
     else if(auto externalHyperplane = std::dynamic_pointer_cast<ExternalHyperplane>(hyperplane))
     {
+        int addedElements = 0;
+
         for(size_t i = 0; i < externalHyperplane->variableIndexes.size(); i++)
         {
             auto variableIndex = externalHyperplane->variableIndexes.at(i);
@@ -272,15 +274,29 @@ std::optional<std::pair<std::map<int, double>, double>> MIPSolverBase::createHyp
 
             if(coefficient != 0.0)
             {
-                auto variable = env->reformulatedProblem->getVariable(variableIndex);
-                gradient.emplace(variable, coefficient);
+                auto element = elements.emplace(variableIndex, coefficient);
+
+                if(!element.second)
+                {
+                    // Element already exists for the variable
+                    element.first->second += coefficient;
+                }
+                else
+                {
+                    addedElements++;
+                }
             }
         }
 
         constant = -externalHyperplane->rhsValue;
 
-        env->output->outputInfo("        HP point generated for external hyperplane description "
-            + externalHyperplane->description + " with " + std::to_string(gradient.size()) + " elements.");
+        env->output->outputInfo("        HP generated for external hyperplane " + externalHyperplane->description
+            + " with " + std::to_string(addedElements) + " terms.");
+    }
+    else
+    {
+        env->output->outputError("        Hyperplane type not supported!");
+        return (std::nullopt);
     }
 
     if(auto numericHyperplane = std::dynamic_pointer_cast<NumericHyperplane>(hyperplane))

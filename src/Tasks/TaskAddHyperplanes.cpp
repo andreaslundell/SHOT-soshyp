@@ -88,10 +88,10 @@ void TaskAddHyperplanes::run()
             else if(auto externalHyperplane = std::dynamic_pointer_cast<ExternalHyperplane>(HP))
             {
                 if(cutAddedSuccessfully)
-                    env->output->outputDebug(
+                    env->output->outputInfo(
                         fmt::format("        Cut added for external constraint {}.", externalHyperplane->description));
                 else
-                    env->output->outputDebug(fmt::format(
+                    env->output->outputInfo(fmt::format(
                         "        Cut not added for external constraint {}.", externalHyperplane->description));
             }
         }
