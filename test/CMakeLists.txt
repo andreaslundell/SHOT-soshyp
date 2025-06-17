@@ -192,3 +192,78 @@ execute_process(COMMAND ${CMAKE_COMMAND}
                         copy_directory
                         ${CMAKE_CURRENT_SOURCE_DIR}/data
                         ${CMAKE_CURRENT_BINARY_DIR}/data)
+
+# Lasserre cut generation test
+
+# Define the name of the new executable
+set(LASSERRE_EXE_NAME test_lasserre)
+
+# Add the source file for the new executable
+add_executable(${LASSERRE_EXE_NAME} LasserreTest.cpp)
+
+# Link libraries required by the new executable
+target_link_libraries(${LASSERRE_EXE_NAME} SHOTSolver)
+target_link_libraries(${LASSERRE_EXE_NAME} pthread m z lapack blas dl gomp)
+
+# Include directories if needed
+target_include_directories(${LASSERRE_EXE_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
+# Add Boost libraries if required
+target_link_libraries(${LASSERRE_EXE_NAME} ${Boost_LIBRARIES})
+
+# Add GAMS libraries if applicable
+if(HAS_GAMS)
+  if(UNIX)
+    if(APPLE)
+      target_link_libraries(${LASSERRE_EXE_NAME} ${GAMS_DIR}/libstdc++.6.dylib)
+    else(APPLE)
+      target_link_libraries(${LASSERRE_EXE_NAME} ${GAMS_DIR}/libstdc++.so.6)
+    endif(APPLE)
+  endif(UNIX)
+endif(HAS_GAMS)
+
+
+if(HAS_CPLEX)
+  if(NOT
+     (CPLEX_FOUND)
+     OR NOT (CPLEX_CONCERT_FOUND)
+     OR NOT (CPLEX_ILOCPLEX_FOUND))
+    message("-- CPLEX libraries could not be found!")
+  else()
+
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+      target_link_libraries(${TEST_EXE_NAME} ${CPLEX_CONCERT_LIBRARY_DEBUG})
+      target_link_libraries(${TEST_EXE_NAME} ${CPLEX_ILOCPLEX_LIBRARY_DEBUG})
+      target_link_libraries(${TEST_EXE_NAME} ${CPLEX_LIBRARY_DEBUG})
+    else()
+      target_link_libraries(${TEST_EXE_NAME} ${CPLEX_CONCERT_LIBRARY})
+      target_link_libraries(${TEST_EXE_NAME} ${CPLEX_ILOCPLEX_LIBRARY})
+      target_link_libraries(${TEST_EXE_NAME} ${CPLEX_LIBRARY})
+    endif()
+  endif()
+endif(HAS_CPLEX)
+
+if(HAS_GUROBI)
+  if(NOT (GUROBI_FOUND))
+    message("-- Gurobi libraries could not be found!")
+  else()
+    
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+      target_link_libraries(${TEST_EXE_NAME} ${GUROBI_CPP_LIBRARY})
+      target_link_libraries(${TEST_EXE_NAME} ${GUROBI_LIBRARY_DEBUG})
+    else()
+      target_link_libraries(${TEST_EXE_NAME} ${GUROBI_CPP_LIBRARY})
+      target_link_libraries(${TEST_EXE_NAME} ${GUROBI_LIBRARY})
+    endif()
+  endif()
+endif(HAS_GUROBI)
+
+# Link the Julia library
+if(HAS_JULIA)
+
+    message("-- Julia include files will be used from: ${JULIA_INCLUDE_DIR}")
+    target_include_directories(SHOTSolver PRIVATE ${JULIA_INCLUDE_DIR})
+
+    message("-- The following Julia library will be used:" ${JULIA_LIBRARY})
+    target_link_libraries(SHOTSolver ${JULIA_LIBRARY})
+endif(HAS_JULIA)
