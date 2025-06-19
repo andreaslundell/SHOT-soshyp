@@ -9,6 +9,7 @@
 #include "../src/Model/Problem.h"
 #include "../src/Report.h"
 #include "../src/Results.h"
+#include "../src/Settings.h"
 #include "../src/Solver.h"
 #include "../src/Structs.h"
 #include "../src/Utilities.h"
@@ -55,7 +56,8 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
         auto solution = prevIter->solutionPoints.at(0).point;
         // Utilities::displayVector(solution);
 
-        auto filename = fmt::format("/tmp/solpt_{0}.txt", prevIter->iterationNumber);
+        auto filename = fmt::format("{0}/lasserre_solpt_{1}.txt",
+            env->settings->getSetting<std::string>("Debug.Path", "Output"), prevIter->iterationNumber);
         Utilities::saveVariablePointVectorToFile(solution, variableNames, filename);
 
         jl_value_t* solutionPath = jl_cstr_to_string(filename.c_str());
@@ -135,6 +137,11 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
             std::vector<double> termCoefficients(arrayTermCoeffs, arrayTermCoeffs + numTermCoeffs - 1);
             double rhsValue = -arrayTermCoeffs[numTermCoeffs - 1];
 
+            for(auto& coeff : termCoefficients)
+            {
+                coeff *= -1.0; // Negate the coefficients
+            }
+
             /*std::cout << "        Variable indexes: ";
             for(auto v : variableIndexes)
                 std::cout << v << " ";
@@ -155,7 +162,7 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
             hyperplane->source = E_HyperplaneSource::External;
             hyperplane->variableIndexes = variableIndexesInt;
             hyperplane->variableCoefficients = termCoefficients;
-            hyperplane->rhsValue = rhsValue;
+            hyperplane->rhsValue = -rhsValue;
             hyperplane->description = fmt::format("lh_{0}", prevIter->iterationNumber);
             hyperplane->isGlobal = true;
 
@@ -209,7 +216,8 @@ void initializeJulia(EnvironmentPtr env)
     }
 
     // Write the reformulated problem to a file
-    std::string filename = "lassarre_problem.txt";
+    auto filename
+        = fmt::format("{0}/lassarre_problem.txt", env->settings->getSetting<std::string>("Debug.Path", "Output"));
     std::stringstream problem;
     problem << env->reformulatedProblem;
     Utilities::writeStringToFile(filename, problem.str());
