@@ -23,6 +23,33 @@ int order;
 bool outputQuiet = false;
 VectorString variableNames;
 
+void printJuliaError(EnvironmentPtr env)
+{
+    if(!jl_exception_occurred())
+        return;
+
+    jl_value_t* exception = jl_exception_occurred();
+
+    // Get the exception type
+    jl_value_t* exception_type = jl_typeof(exception);
+    const char* type_name = jl_typename_str(exception_type);
+
+    // Get the exception message
+    jl_value_t* msg = jl_get_field(exception, "msg");
+    const char* error_msg = "";
+    if(msg && jl_is_string(msg))
+    {
+        error_msg = jl_string_ptr(msg);
+    }
+
+    // Print detailed error information
+    env->output->outputError(fmt::format("Julia Exception Type: {}", type_name));
+    env->output->outputError(fmt::format("Julia Exception Message: {}", error_msg));
+
+    // Clear the exception
+    jl_exception_clear();
+}
+
 // Callback function definition
 void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
 {
@@ -47,9 +74,8 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
 
         if(jl_exception_occurred())
         {
-            env->output->outputError(fmt::format(
-                "        Julia exception when defining sos_hyp function: {}", jl_typeof_str(jl_exception_occurred())));
-            std::cout << jl_eval_string("sprint(showerror, ccall(:jl_exception_occurred, Any, ()))") << std::endl;
+            env->output->outputError(fmt::format("        Julia exception when defining sos_hyp function"));
+            printJuliaError(env);
             return;
         }
 
@@ -75,7 +101,7 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
         {
             env->output->outputError(fmt::format(
                 "        Julia exception when calling sos_hyp: {}", jl_typeof_str(jl_exception_occurred())));
-            std::cout << jl_eval_string("sprint(showerror, ccall(:jl_exception_occurred, Any, ()))") << std::endl;
+            printJuliaError(env);
             return;
         }
 
@@ -190,9 +216,9 @@ void initializeJulia(EnvironmentPtr env)
 
     if(jl_exception_occurred())
     {
-        env->output->outputError(
-            fmt::format("        Julia exception when preparing problem: {}", jl_typeof_str(jl_exception_occurred())));
-        std::cout << jl_eval_string("sprint(showerror, ccall(:jl_exception_occurred, Any, ()))") << std::endl;
+        env->output->outputError(fmt::format("        Julia exception when initializing environment"));
+        printJuliaError(env);
+
         return;
     }
 
@@ -201,9 +227,8 @@ void initializeJulia(EnvironmentPtr env)
 
     if(jl_exception_occurred())
     {
-        env->output->outputError(
-            fmt::format("        Julia exception when loading module: {}", jl_typeof_str(jl_exception_occurred())));
-        std::cout << jl_eval_string("sprint(showerror, ccall(:jl_exception_occurred, Any, ()))") << std::endl;
+        env->output->outputError(fmt::format("        Julia exception when loading module"));
+        printJuliaError(env);
         return;
     }
 
@@ -223,14 +248,14 @@ void initializeJulia(EnvironmentPtr env)
     Utilities::writeStringToFile(filename, problem.str());
 
     jl_value_t* problemPath = jl_cstr_to_string(filename.c_str());
-    jl_value_t* directory = jl_cstr_to_string("");
+    jl_value_t* directory = jl_cstr_to_string(""); // directory already included in filename
+
     jl_value_t* prepareProblemStatus = jl_call2(funcPrepareProblem, problemPath, directory);
 
     if(jl_exception_occurred())
     {
-        env->output->outputError(
-            fmt::format("        Julia exception when preparing problem: {}", jl_typeof_str(jl_exception_occurred())));
-        std::cout << jl_eval_string("sprint(showerror, ccall(:jl_exception_occurred, Any, ()))") << std::endl;
+        env->output->outputError(fmt::format("        Julia exception when preparing problem"));
+        printJuliaError(env);
         return;
     }
 
@@ -265,6 +290,20 @@ int main(int argc, const char* argv[])
 
     // Load options from the options file
     solver->setOptionsFromFile(optionsFilename);
+
+    // Update some options
+    std::string debugPath = "/home/andreas/SHOT/SHOT-soshyp/SHOT-soshyp/build/debug/test/sosout";
+    solver->updateSetting("Debug.Path", "Output", debugPath);
+    solver->updateSetting("Debug.Enable", "Output", true);
+    solver->updateSetting("Reformulation.ObjectiveFunction.Epigraph.Use", "Model", true);
+
+    solver->updateSetting("CutStrategy", "Dual", static_cast<int>(ES_HyperplaneCutStrategy::OnlyExternal));
+    solver->updateSetting("HyperplaneCuts.Delay", "Dual", false);
+    solver->updateSetting("MIP.Solver", "Dual", static_cast<int>(ES_MIPSolver::Cbc));
+
+    solver->updateSetting("Relaxation.Use", "Dual", false);
+    solver->updateSetting("Convexity.AssumeConvex", "Model", false);
+    solver->updateSetting("Console.Iteration.Detail", "Output", static_cast<int>(ES_IterationOutputDetail::Full));
 
     // Load the problem file
     if(!solver->setProblem(problemFilename))
