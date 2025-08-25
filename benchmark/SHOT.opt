@@ -1,0 +1,612 @@
+
+
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+* Dual strategy
+* These settings control the various functionality of the dual strategy in SHOT, i.e., the polyhedral outer approximation utilizing the ESH or ECP algorithms.
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+
+* Dual cut strategy: 0: ESH. 1: ECP. 2: Only external (through callback). 
+Dual.CutStrategy = 0
+
+
+******************************************************************************************************************************************
+* Extended supporting hyperplane method
+* These settings control various aspects of the ESH implementation, including the strategy to obtain the interior point.
+******************************************************************************************************************************************
+
+* The fraction of violated constraints to generate cutting planes for. 
+Dual.ESH.InteriorPoint.CuttingPlane.ConstraintSelectionFactor = 0.25
+
+* Iteration limit for minimax cutting plane solver. 
+Dual.ESH.InteriorPoint.CuttingPlane.IterationLimit = 100
+
+* Iteration limit for minimization subsolver. 
+Dual.ESH.InteriorPoint.CuttingPlane.IterationLimitSubsolver = 100
+
+* Reuse valid cutting planes in main dual model. 
+Dual.ESH.InteriorPoint.CuttingPlane.Reuse = false
+
+* Absolute termination tolerance between LP and linesearch objective. 
+Dual.ESH.InteriorPoint.CuttingPlane.TerminationToleranceAbs = 1
+
+* Relative termination tolerance between LP and linesearch objective. 
+Dual.ESH.InteriorPoint.CuttingPlane.TerminationToleranceRel = 1
+
+* Time limit for minimax solver. 
+Dual.ESH.InteriorPoint.CuttingPlane.TimeLimit = 10
+
+* Lower bound for minimax objective variable. 
+Dual.ESH.InteriorPoint.MinimaxObjectiveLowerBound = -1000000000000
+
+* Upper bound for minimax objective variable. 
+Dual.ESH.InteriorPoint.MinimaxObjectiveUpperBound = 0.1
+
+* Utilize primal solution as interior point: 0: No. 1: Add as new. 2: Replace old. 3: Use avarage. 
+Dual.ESH.InteriorPoint.UsePrimalSolution = 1
+
+* Constraint tolerance for when not to add individual hyperplanes. 
+Dual.ESH.Rootsearch.ConstraintTolerance = 1e-08
+
+* Allow only one hyperplane per constraint per iteration. 
+Dual.ESH.Rootsearch.UniqueConstraints = false
+
+* Perform rootsearch on max function, otherwise on individual constraints. 
+Dual.ESH.Rootsearch.UseMaxFunction = false
+
+
+******************************************************************************************************************************************
+* Generated hyperplane cuts
+* These settings control how the cutting planes or supporting hyperplanes are generated.
+******************************************************************************************************************************************
+
+* The fraction of violated constraints to generate supporting hyperplanes / cutting planes for. 
+Dual.HyperplaneCuts.ConstraintSelectionFactor = 0.5
+
+* Add hyperplane cuts to model only after optimal MIP solution. 
+Dual.HyperplaneCuts.Delay = false
+
+* Rootsearch performed on constraints with values larger than this factor times the maximum value. 
+Dual.HyperplaneCuts.MaxConstraintFactor = 0.1
+
+* Maximal number of hyperplanes to add per iteration. 
+Dual.HyperplaneCuts.MaxPerIteration = 200
+
+* When to use the objective root search: 0: Always. 1: IfConvex. 2: Never. 
+Dual.HyperplaneCuts.ObjectiveRootSearch = 1
+
+* Whether to save the points in the generated hyperplanes list. 
+Dual.HyperplaneCuts.SaveHyperplanePoints = false
+
+* Add integer cuts for infeasible integer-combinations for binary problems. 
+Dual.HyperplaneCuts.UseIntegerCuts = false
+
+
+******************************************************************************************************************************************
+* MIP solver
+* These settings control the general functionality of the MIP solver in the dual strategy. Note that solver-specific settings for Cplex, Gurobi and Cbc are available under the "Subsolver" category.
+******************************************************************************************************************************************
+
+* Initial cutoff value to use. 
+Dual.MIP.CutOff.InitialValue = 1.7976931348623157e+308
+
+* An extra tolerance for the objective cutoff value (to prevent infeasible subproblems). 
+Dual.MIP.CutOff.Tolerance = 1e-05
+
+* Use the initial cutoff value. 
+Dual.MIP.CutOff.UseInitialValue = false
+
+* Allow feasibility repair of integer cuts. 
+Dual.MIP.InfeasibilityRepair.IntegerCuts = true
+
+* Max number of infeasible problems repaired without primal objective value improvement. 
+Dual.MIP.InfeasibilityRepair.IterationLimit = 100
+
+* Time limit when reparing infeasible problem. 
+Dual.MIP.InfeasibilityRepair.TimeLimit = 10
+
+* Enable the infeasibility repair strategy for nonconvex problems. 
+Dual.MIP.InfeasibilityRepair.Use = true
+
+* Node limit to use for MIP solver in single-tree strategy. 
+Dual.MIP.NodeLimit = 1.7976931348623157e+308
+
+* Number of threads to use in MIP solver: 0: Automatic. 
+Dual.MIP.NumberOfThreads = 0
+
+* The reduced-cost tolerance for optimality in the MIP solver. 
+Dual.MIP.OptimalityTolerance = 1e-06
+
+* When to call the MIP presolve: 0: Never. 1: Once. 2: Always. 
+Dual.MIP.Presolve.Frequency = 1
+
+* Remove redundant constraints (as determined by presolve). 
+Dual.MIP.Presolve.RemoveRedundantConstraints = false
+
+* Update bounds (from presolve) to the MIP model. 
+Dual.MIP.Presolve.UpdateObtainedBounds = true
+
+* Iterations without dual bound updates for forcing optimal MIP solution. 
+Dual.MIP.SolutionLimit.ForceOptimal.Iteration = 10000
+
+* Time (s) without dual bound updates for forcing optimal MIP solution. 
+Dual.MIP.SolutionLimit.ForceOptimal.Time = 1000
+
+* Max number of iterations between MIP solution limit increases. 
+Dual.MIP.SolutionLimit.IncreaseIterations = 50
+
+* Initial MIP solution limit. 
+Dual.MIP.SolutionLimit.Initial = 1
+
+* The constraint tolerance for when to update MIP solution limit. 
+Dual.MIP.SolutionLimit.UpdateTolerance = 0.001
+
+* The maximum number of solutions in the solution pool. 
+Dual.MIP.SolutionPool.Capacity = 100
+
+* Which MIP solver to use: 0: Cplex. 1: Gurobi. 2: Cbc. 
+Dual.MIP.Solver = 2
+
+* Update nonlinear objective variable bounds to primal/dual bounds. 
+Dual.MIP.UpdateObjectiveBounds = false
+
+
+******************************************************************************************************************************************
+* Dual reduction cut
+* These settings control the added dual reduction cuts from the primal solution that will try to force a better primal solution. This functionality is only used if SHOT cannot deduce that the problem is nonconvex .
+******************************************************************************************************************************************
+
+* Max number of primal cut reduction without primal improvement. 
+Dual.ReductionCut.MaxIterations = 20
+
+* The factor used to reduce the cutoff value. 
+Dual.ReductionCut.ReductionFactor = 0.001
+
+* The reduction cut strategy to use: 0: Fraction. 1: GoldenRatio. 
+Dual.ReductionCut.Strategy = 0
+
+* Enable the dual reduction cut strategy for nonconvex problems. 
+Dual.ReductionCut.Use = true
+
+
+******************************************************************************************************************************************
+* Relaxation strategies
+* These settings contorl various aspects regarding integer-relaxation of the dual problem.
+******************************************************************************************************************************************
+
+* The frequency to solve an LP problem: 0: Disable. 
+Dual.Relaxation.Frequency = 0
+
+* The max number of relaxed LP problems to solve initially. 
+Dual.Relaxation.IterationLimit = 200
+
+* Max number of lazy constraints to add in relaxed solutions in single-tree strategy. 
+Dual.Relaxation.MaxLazyConstraints = 0
+
+* Time limit (s) when solving LP problems initially. 
+Dual.Relaxation.TerminationTolerance = 0.5
+
+* Time limit (s) when solving LP problems initially. 
+Dual.Relaxation.TimeLimit = 30
+
+* Initially solve continuous dual relaxations. 
+Dual.Relaxation.Use = false
+
+
+******************************************************************************************************************************************
+* Tree strategy
+* The single-tree strategy is normally more efficient than the multi-tree one. However, not all MIP solvers support the required lazy constraint callbacks. These settings selects this strategy and controls its behaviour.
+******************************************************************************************************************************************
+
+* The main strategy to use: 0: Multi-tree. 1: Single-tree. 
+Dual.TreeStrategy = 1
+
+
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+* Optimization model
+* These settings control various aspects of SHOT's representation  for and handling of the provided optimization model.
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+
+
+******************************************************************************************************************************************
+* Bound tightening
+* SHOT performs bound tightening to strengthen the internal representation of the problem. These settings control how and when bound tightening is performed.
+******************************************************************************************************************************************
+
+* Maximal number of bound tightening iterations. 
+Model.BoundTightening.FeasibilityBased.MaxIterations = 5
+
+* Time limit for bound tightening. 
+Model.BoundTightening.FeasibilityBased.TimeLimit = 2
+
+* Peform feasibility-based bound tightening. 
+Model.BoundTightening.FeasibilityBased.Use = true
+
+* Peform feasibility-based bound tightening on nonlinear expressions. 
+Model.BoundTightening.FeasibilityBased.UseNonlinear = true
+
+* Constraint termination tolerance. 
+Model.BoundTightening.InitialPOA.ConstraintTolerance = 0.1
+
+* Dual cut strategy: 0: ESH. 1: ECP. 
+Model.BoundTightening.InitialPOA.CutStrategy = 1
+
+* Iteration limit for POA. 
+Model.BoundTightening.InitialPOA.IterationLimit = 50
+
+* Objective constraint termination tolerance. 
+Model.BoundTightening.InitialPOA.ObjectiveConstraintTolerance = 0.001
+
+* Absolute objective gap termination level. 
+Model.BoundTightening.InitialPOA.ObjectiveGapAbsolute = 0.1
+
+* Relative objective gap termination level. 
+Model.BoundTightening.InitialPOA.ObjectiveGapRelative = 0.1
+
+* Tolerance factor for when no progress is made. 
+Model.BoundTightening.InitialPOA.StagnationConstraintTolerance = 0.01
+
+* Limit for iterations without significant progress. 
+Model.BoundTightening.InitialPOA.StagnationIterationLimit = 5
+
+* Time limit for initial POA. 
+Model.BoundTightening.InitialPOA.TimeLimit = 5
+
+* Create an initial polyhedral outer approximation. 
+Model.BoundTightening.InitialPOA.Use = false
+
+
+******************************************************************************************************************************************
+* Convexity
+* These settings control the convexity detection functionality
+******************************************************************************************************************************************
+
+* Assume that the problem is convex. 
+Model.Convexity.AssumeConvex = false
+
+* Convexity tolerance for the eigenvalues of the Hessian matrix for quadratic terms. 
+Model.Convexity.Quadratics.EigenValueTolerance = 1e-05
+
+
+******************************************************************************************************************************************
+* Automatic reformulations
+* These settings control the automatic reformulations performed in SHOT.
+******************************************************************************************************************************************
+
+* Add convex envelopes (subject to original bounds) to bilinear terms. 
+Model.Reformulation.Bilinear.AddConvexEnvelope = false
+
+* Reformulate integer bilinear terms: 0: No. 1: No if nonconvex quadratic terms allowed by MIP solver. 2: Yes. 
+Model.Reformulation.Bilinear.IntegerFormulation = 1
+
+* Do not reformulate integer variables in bilinear terms which can assume more than this number of discrete values. 
+Model.Reformulation.Bilinear.IntegerFormulation.MaxDomain = 100
+
+* When to partition nonlinear sums in constraints: 0: Always. 1: If result is convex. 2: Never. 
+Model.Reformulation.Constraint.PartitionNonlinearTerms = 1
+
+* When to partition quadratic sums in constraints: 0: Always. 1: If result is convex. 2: Never. 
+Model.Reformulation.Constraint.PartitionQuadraticTerms = 1
+
+* Extract monomial terms from nonlinear expressions. 
+Model.Reformulation.Monomials.Extract = true
+
+* How to reformulate binary monomials: 0: None. 1: Simple. 2: Costa and Liberti. 
+Model.Reformulation.Monomials.Formulation = 1
+
+* Reformulates a nonlinear objective as an auxiliary constraint. 
+Model.Reformulation.ObjectiveFunction.Epigraph.Use = false
+
+* When to partition nonlinear sums in objective function: 0: Always. 1: If result is convex. 2: Never. 
+Model.Reformulation.ObjectiveFunction.PartitionNonlinearTerms = 1
+
+* When to partition quadratic sums in objective function: 0: Always. 1: If result is convex. 2: Never. 
+Model.Reformulation.ObjectiveFunction.PartitionQuadraticTerms = 1
+
+* Which formulation to use in eigenvalue decomposition: 0: Term coefficient is included in reformulation. 1: Term coefficient remains. 
+Model.Reformulation.Quadratics.EigenValueDecomposition.Formulation = 0
+
+* Variables with eigenvalues smaller than this value will be ignored. 
+Model.Reformulation.Quadratics.EigenValueDecomposition.Tolerance = 1e-06
+
+* Whether to use the eigenvalue decomposition of convex quadratic functions. 
+Model.Reformulation.Quadratics.EigenValueDecomposition.Use = false
+
+* How to extract quadratic terms from nonlinear expressions: 0: Do not extract. 1: Extract to same objective or constraint. 2: Extract to quadratic equality constraint if nonconvex. 3: Extract to quadratic equality constraint even if convex. 
+Model.Reformulation.Quadratics.ExtractStrategy = 1
+
+* How to treat quadratic functions: 0: All nonlinear. 1: Use quadratic objective. 2: Use convex quadratic objective and constraints. 3: Use nonconvex quadratic objective and constraints. 
+Model.Reformulation.Quadratics.Strategy = 2
+
+* Extract signomial terms from nonlinear expressions. 
+Model.Reformulation.Signomials.Extract = true
+
+
+******************************************************************************************************************************************
+* Variables
+* These settings control the maximum variable bounds allowed in SHOT. Projection will be performed onto these intervals. Note that the MIP solvers may have stricter requirements, in which case those may be used.
+******************************************************************************************************************************************
+
+* Maximum upper bound for continuous variables. 
+Model.Variables.Continuous.MaximumUpperBound = 1e+50
+
+* Minimum lower bound for continuous variables. 
+Model.Variables.Continuous.MinimumLowerBound = -1e+50
+
+* Maximum upper bound for integer variables. 
+Model.Variables.Integer.MaximumUpperBound = 2000000000
+
+* Minimum lower bound for integer variables. 
+Model.Variables.Integer.MinimumLowerBound = -2000000000
+
+* Max absolute bound for the auxiliary nonlinear objective variable. 
+Model.Variables.NonlinearObjectiveVariable.Bound = 1000000000000
+
+
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+* Modeling system
+* These settings control functionality used in the interfaces to different modeling environments.
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+
+
+******************************************************************************************************************************************
+* GAMS interface
+* These settings control functionality used in the GAMS interface.
+******************************************************************************************************************************************
+
+* Extraction algorithm for quadratic equations in GAMS interface: 0: automatic. 1: threepass. 2: doubleforward. 3: concurrent. 
+ModelingSystem.GAMS.QExtractAlg = 0
+
+
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+* Solver output
+* These settings control how much and what output is shown to the user from the solver.
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+
+* Show output from dual solver on console. 
+Output.Console.DualSolver.Show = false
+
+* When should the fixed strategy be used: 0: Full. 1: On objective gap update. 2: On objective gap update and all primal NLP calls. 
+Output.Console.Iteration.Detail = 0
+
+* Log level for console output: 0: Trace. 1: Debug. 2: Info. 3: Warning. 4: Error. 5: Critical. 6: Off. 
+Output.Console.LogLevel = 2
+
+* Show output from primal solver on console. 
+Output.Console.PrimalSolver.Show = false
+
+* Use debug functionality. 
+Output.Debug.Enable = true
+
+* The folder where to save the debug information. 
+Output.Debug.Path = /home/ubuntu/SHOT-soshyp/build/debug/test/sosout
+
+* Log level for file output: 0: Trace. 1: Debug. 2: Info. 3: Warning. 4: Error. 5: Critical. 6: Off. 
+Output.File.LogLevel = 2
+
+* Name of GAMS GDX file to write alternative solutions to. 
+Output.GAMS.AlternateSolutionsFile = 
+
+* Where to save the output files: 0: Problem directory. 1: Program directory. 
+Output.OutputDirectory = 1
+
+* Save max this number of primal solutions to OSrL or GDX file. 
+Output.SaveNumberOfSolutions = 1
+
+
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+* Primal heuristics
+* These settings control the primal heuristics used in SHOT.
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+
+
+******************************************************************************************************************************************
+* Fixed-integer (NLP) strategy
+* The main primal strategy in SHOT is to solve integer-fixed NLP problems. These settings control, e.g., how often NLP problems are solved.
+******************************************************************************************************************************************
+
+* When should the fixed strategy be used: 0: Use each iteration. 1: Based on iteration or time. 2: Based on iteration or time, and for all feasible MIP solutions. 
+Primal.FixedInteger.CallStrategy = 1
+
+* Create a cut from an infeasible solution point. 
+Primal.FixedInteger.CreateInfeasibilityCut = false
+
+* If the objective gap between the MIP point and dual solution is less than this the fixed strategy is activated. 
+Primal.FixedInteger.DualPointGap.Relative = 0.001
+
+* Dynamically update the call frequency based on success. 
+Primal.FixedInteger.Frequency.Dynamic = true
+
+* Max number of iterations between calls. 
+Primal.FixedInteger.Frequency.Iteration = 10
+
+* Max duration (s) between calls. 
+Primal.FixedInteger.Frequency.Time = 5
+
+* Max number of iterations per call. 
+Primal.FixedInteger.IterationLimit = 10000000
+
+* Whether to resolve with the same integer combination, e.g. for nonconvex problems with different continuous variable starting points. 
+Primal.FixedInteger.OnlyUniqueIntegerCombinations = true
+
+* NLP solver to use: 0: Ipopt. 1: GAMS. 2: SHOT. 
+Primal.FixedInteger.Solver = 0
+
+* Source of fixed MIP solution point: 0: All. 1: First. 2: All feasible. 3: First and all feasible. 4: With smallest constraint deviation. 
+Primal.FixedInteger.Source = 3
+
+* Which problem formulation to use for NLP problem: 0: Original problem. 1: Reformulated problem. 2: Both. 
+Primal.FixedInteger.SourceProblem = 0
+
+* Time limit (s) per NLP problem. 
+Primal.FixedInteger.TimeLimit = 10
+
+* Use the fixed integer primal strategy. 
+Primal.FixedInteger.Use = true
+
+* Warm start the NLP solver. 
+Primal.FixedInteger.Warmstart = true
+
+
+******************************************************************************************************************************************
+* Primal root search
+* SHOT can utilize root searches between the dual solution point and an integer-fixed interior point. This setting controls whether this strategy is used.
+******************************************************************************************************************************************
+
+* Use a rootsearch to find primal solutions. 
+Primal.Rootsearch.Use = true
+
+* Integer tolerance for accepting primal solutions. 
+Primal.Tolerance.Integer = 1e-05
+
+* Linear constraint tolerance for accepting primal solutions. 
+Primal.Tolerance.LinearConstraint = 1e-06
+
+* Nonlinear constraint tolerance for accepting primal solutions. 
+Primal.Tolerance.NonlinearConstraint = 1e-05
+
+* Trust that subsolvers (NLP, MIP) give primal solutions that respect linear constraints. 
+Primal.Tolerance.TrustLinearConstraintValues = true
+
+
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+* Strategy
+* Overall strategy parameters used in SHOT.
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+
+* Modifies some settings to their recommended values based on the strategy. 
+Strategy.UseRecommendedSettings = true
+
+
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+* Subsolver functionality
+* These settings allow for more direct control of the  different subsolvers utilized in SHOT.
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+
+
+******************************************************************************************************************************************
+* Cbc
+******************************************************************************************************************************************
+
+* Whether to scale objective, rhs and bounds of problem if they look odd (experimental). 
+Subsolver.Cbc.AutoScale = false
+
+* Run Cbc with multiple threads in deterministic mode. 
+Subsolver.Cbc.DeterministicParallelMode = false
+
+* Node strategy: 0: depth. 1: downdepth. 2: downfewest. 3: fewest. 4: hybrid. 5: updepth. 6: upfewest. 
+Subsolver.Cbc.NodeStrategy = 4
+
+* Whether to scale problem: 0: automatic. 1: dynamic. 2: equilibrium. 3: geometric. 4: off. 5: rowsonly. 
+Subsolver.Cbc.Scaling = 4
+
+* This turns on newer features: 0: easy problems. 1: default. 2: aggressive. 
+Subsolver.Cbc.Strategy = 1
+
+
+******************************************************************************************************************************************
+* GAMS
+* Settings for the GAMS NLP solvers.
+******************************************************************************************************************************************
+
+* Options file for the NLP solver in GAMS. 
+Subsolver.GAMS.NLP.OptionsFilename = 
+
+* NLP solver to use in GAMS (auto: SHOT chooses). 
+Subsolver.GAMS.NLP.Solver = auto
+
+******************************************************************************************************************************************
+* Ipopt
+******************************************************************************************************************************************
+
+* Constraint violation tolerance in Ipopt. 
+Subsolver.Ipopt.ConstraintViolationTolerance = 1e-08
+
+* Ipopt linear subsolver: 0: Default. 1: MA27. 2: MA57. 3: MA86. 4: MA97. 5: MUMPS. 
+Subsolver.Ipopt.LinearSolver = 0
+
+* Maximum number of iterations. 
+Subsolver.Ipopt.MaxIterations = 1000
+
+* Relative convergence tolerance. 
+Subsolver.Ipopt.RelativeConvergenceTolerance = 1e-08
+
+
+******************************************************************************************************************************************
+* Root search solver
+* Settings for the Boost rootsearch functionality.
+******************************************************************************************************************************************
+
+* Epsilon constraint tolerance for root search. 
+Subsolver.Rootsearch.ActiveConstraintTolerance = 0
+
+* Maximal root search iterations. 
+Subsolver.Rootsearch.MaxIterations = 100
+
+* Root search method to use: 0: TOMS748. 1: Bisection. 
+Subsolver.Rootsearch.Method = 0
+
+* Epsilon lambda tolerance for root search. 
+Subsolver.Rootsearch.TerminationTolerance = 1e-16
+
+
+******************************************************************************************************************************************
+* SHOT primal NLP solver
+******************************************************************************************************************************************
+
+* The fraction of generated hyperplanes to reuse.. 
+Subsolver.SHOT.ReuseHyperplanes.Fraction = 0.1
+
+* Reuse valid generated hyperplanes in main dual model.. 
+Subsolver.SHOT.ReuseHyperplanes.Use = true
+
+* Do FBBT on NLP problem.. 
+Subsolver.SHOT.UseFBBT = false
+
+
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+* Termination
+* These settings control when SHOT will terminate the solution process.
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+
+* Termination tolerance for nonlinear constraints. 
+Termination.ConstraintTolerance = 1e-08
+
+* Min absolute difference between max nonlinear constraint errors in subsequent iterations for termination. 
+Termination.DualStagnation.ConstraintTolerance = 1e-06
+
+* Max number of iterations without significant dual objective value improvement. 
+Termination.DualStagnation.IterationLimit = 10000
+
+* Iteration limit for main strategy. 
+Termination.IterationLimit = 1000000
+
+* Termination tolerance for the nonlinear objective constraint. 
+Termination.ObjectiveConstraintTolerance = 1e-08
+
+* Absolute gap termination tolerance for objective function. 
+Termination.ObjectiveGap.Absolute = 0.001
+
+* Relative gap termination tolerance for objective function. 
+Termination.ObjectiveGap.Relative = 0.001
+
+* Max number of iterations without significant primal objective value improvement. 
+Termination.PrimalStagnation.IterationLimit = 50
+
+* Time limit (s) for solver. 
+Termination.TimeLimit = 1.7976931348623157e+308
