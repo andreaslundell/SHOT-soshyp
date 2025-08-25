@@ -21,6 +21,7 @@ using namespace SHOT;
 int itersWithoutAddedHPs = 0;
 int order;
 bool outputQuiet = false;
+std::string assign = "all";
 VectorString variableNames;
 
 void printJuliaError(EnvironmentPtr env)
@@ -102,7 +103,7 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
             env->output->outputError(fmt::format(
                 "        Julia exception when calling sos_hyp: {}", jl_typeof_str(jl_exception_occurred())));
             printJuliaError(env);
-            return;
+            exit(1);
         }
 
         if(jl_is_tuple(juliaCallResult))
@@ -209,7 +210,7 @@ void initializeJulia(EnvironmentPtr env)
     jl_init();
 
     // Load the Julia file
-    jl_eval_string("include(\"..//soshyp//main.jl\")");
+    jl_eval_string("include(\"//home//ubuntu//SHOT-soshyp//build//debug//soshyp//main.jl\")");
     env->output->outputDebug("        Loading Julia module.");
     jl_eval_string("using .soshyp");
     env->output->outputDebug("        Julia module loaded.");
@@ -218,8 +219,7 @@ void initializeJulia(EnvironmentPtr env)
     {
         env->output->outputError(fmt::format("        Julia exception when initializing environment"));
         printJuliaError(env);
-
-        return;
+        exit(1);
     }
 
     // Get a handle to the function
@@ -229,7 +229,7 @@ void initializeJulia(EnvironmentPtr env)
     {
         env->output->outputError(fmt::format("        Julia exception when loading module"));
         printJuliaError(env);
-        return;
+        exit(1);
     }
 
     jl_function_t* funcPrepareProblem = jl_get_function(module, "prepare_problem");
@@ -237,7 +237,7 @@ void initializeJulia(EnvironmentPtr env)
     if(funcPrepareProblem == nullptr)
     {
         env->output->outputError("        Function prepare_problem not found!");
-        return;
+        exit(1);
     }
 
     // Write the reformulated problem to a file
@@ -250,13 +250,22 @@ void initializeJulia(EnvironmentPtr env)
     jl_value_t* problemPath = jl_cstr_to_string(filename.c_str());
     jl_value_t* directory = jl_cstr_to_string(""); // directory already included in filename
 
-    jl_value_t* prepareProblemStatus = jl_call2(funcPrepareProblem, problemPath, directory);
+    // Prepare the arguments
+    jl_value_t* argOrder = jl_box_int64(order); // order
+    jl_value_t* argQuiet = jl_box_bool(outputQuiet); // quiet
+    jl_value_t* argAssign = jl_cstr_to_string(assign.c_str()); // assign
+
+    // Create an array of arguments
+    jl_value_t* args[5] = { problemPath, directory, argOrder, argQuiet, argAssign};
+    
+    jl_value_t* prepareProblemStatus = jl_call(funcPrepareProblem, args, 5);
 
     if(jl_exception_occurred())
     {
         env->output->outputError(fmt::format("        Julia exception when preparing problem"));
         printJuliaError(env);
-        return;
+
+        exit(1);
     }
 
     for(auto& V : env->reformulatedProblem->allVariables)
@@ -266,21 +275,34 @@ void initializeJulia(EnvironmentPtr env)
 int main(int argc, const char* argv[])
 {
     // Check if the correct number of arguments is provided
-    if(argc <= 3)
+    if(argc <= 4)
     {
-        std::cerr << "Usage: " << argv[0] << " <problem_filename> <options_filename> <order=2,3,...> <quiet=true/false>"
+        std::cerr << "Usage: " << argv[0] << " <problem_filename> <options_filename> <order=2,3,...> <quiet=true/false> <assign=all/cliques>"
                   << std::endl;
         return 1;
     }
 
     // Extract arguments
     std::string problemFilename = argv[1];
-    std::string optionsFilename = argv[2];
+    std::string outputDirectory = argv[2];
+    std::string optionsFilename = argv[3];
 
-    order = argv[3] ? std::stoi(argv[3]) : 2; // Default order is 2 if not provided
-    outputQuiet = (argc > 4 && std::string(argv[4]) == "true");
+    order = argv[4] ? std::stoi(argv[4]) : 2; // Default order is 2 if not provided, if order is 0 then run normal SHOT on problem
+    outputQuiet = (argc >= 5 && std::string(argv[5]) == "true");
+    assign = (argc >= 6 && std::string(argv[6]) == "all") ? "all" : "cliques";
 
-    std::cout << " Lasserre order is set to: " << order << std::endl;
+    std::cout << " Output directory: " << outputDirectory << std::endl;
+
+    if (order != 0)
+    {
+        std::cout << " Lasserre order is set to: " << order << std::endl;
+        std::cout << " Assign parameter set to: " << assign << std::endl;
+    }
+    else    
+    {
+        std::cout << " Using regular SHOT nonconvex strategy. " << order << std::endl;
+    }
+
 
     // Create a Solver instance
     std::unique_ptr<Solver> solver = std::make_unique<Solver>();
@@ -292,18 +314,25 @@ int main(int argc, const char* argv[])
     solver->setOptionsFromFile(optionsFilename);
 
     // Update some options
-    std::string debugPath = "/home/andreas/SHOT/SHOT-soshyp/SHOT-soshyp/build/debug/test/sosout";
+    std::string debugPath = outputDirectory;
     solver->updateSetting("Debug.Path", "Output", debugPath);
     solver->updateSetting("Debug.Enable", "Output", true);
-    solver->updateSetting("Reformulation.ObjectiveFunction.Epigraph.Use", "Model", true);
 
-    solver->updateSetting("CutStrategy", "Dual", static_cast<int>(ES_HyperplaneCutStrategy::OnlyExternal));
-    solver->updateSetting("HyperplaneCuts.Delay", "Dual", false);
+    if (order != 0) 
+    {
+        solver->updateSetting("Reformulation.ObjectiveFunction.Epigraph.Use", "Model", true);
+        solver->updateSetting("CutStrategy", "Dual", static_cast<int>(ES_HyperplaneCutStrategy::OnlyExternal));
+        solver->updateSetting("HyperplaneCuts.Delay", "Dual", false);
+        solver->updateSetting("Convexity.AssumeConvex", "Model", true);
+    }
+    
     solver->updateSetting("MIP.Solver", "Dual", static_cast<int>(ES_MIPSolver::Cbc));
 
     solver->updateSetting("Relaxation.Use", "Dual", false);
-    solver->updateSetting("Convexity.AssumeConvex", "Model", false);
     solver->updateSetting("Console.Iteration.Detail", "Output", static_cast<int>(ES_IterationOutputDetail::Full));
+
+    std::string logFilename = outputDirectory + "/SHOT.log";
+    solver->setLogFile(logFilename);
 
     // Load the problem file
     if(!solver->setProblem(problemFilename))
@@ -315,15 +344,18 @@ int main(int argc, const char* argv[])
     env->report->outputProblemInstanceReport();
     env->report->outputOptionsReport();
 
-    // Registers a callback that is activated every time a new primal solution is found
-    // Register the callback function
-    solver->registerCallback(
-        E_EventType::ExternalHyperplaneSelection, [&env](std::any args) { externalHyperplaneSelection(env, args); });
-
+    if (order != 0) 
+    {
+        // Registers a callback that is activated every time a new primal solution is found
+        // Register the callback function
+        solver->registerCallback(
+            E_EventType::ExternalHyperplaneSelection, [&env](std::any args) { externalHyperplaneSelection(env, args); });
+    
     // Initialize the Julia environment
     std::cout << " \n Initializing Julia environment..." << std::endl;
     initializeJulia(env);
-
+    }
+    
     // Solve the problem
     if(!solver->solveProblem())
     {
@@ -333,6 +365,34 @@ int main(int argc, const char* argv[])
 
     solver->finalizeSolution();
     env->report->outputSolutionReport();
+
+    // Write OSRL output to file
+    auto osrl = solver->getResultsOSrL();
+    std::string osrlFilename = outputDirectory + "/SHOT.osrl";
+
+    if(!Utilities::writeStringToFile(osrlFilename, osrl))
+    {
+        std::cerr << "Error: Unable to write OSRL file to: " << osrlFilename << std::endl;
+        return 1;
+    }
+    else
+    {
+        std::cout << "OSRL results written to: " << osrlFilename << std::endl;
+    }
+
+        // Write trace file
+    auto trc = solver->getResultsTrace();
+    std::string trcFilename = outputDirectory + "/SHOT.trc";
+
+    if(!Utilities::writeStringToFile(trcFilename, trc))
+    {
+        std::cerr << "Error: Unable to write trace file to: " << trcFilename << std::endl;
+        return 1;
+    }
+    else
+    {
+        std::cout << "Trace results written to: " << trcFilename << std::endl;
+    }
 
     return 0;
 }
