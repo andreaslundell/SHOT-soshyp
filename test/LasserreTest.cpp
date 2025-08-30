@@ -12,6 +12,7 @@
 #include "../src/Settings.h"
 #include "../src/Solver.h"
 #include "../src/Structs.h"
+#include "../src/TaskHandler.h"
 #include "../src/Utilities.h"
 
 #include <julia.h>
@@ -19,10 +20,11 @@
 using namespace SHOT;
 
 int itersWithoutAddedHPs = 0;
-int order;
+int order = 2;
 bool outputQuiet = false;
-std::string assign = "all";
+std::string sparsity = "all";
 VectorString variableNames;
+double lastObjValue = SHOT_DBL_MAX;
 
 void printJuliaError(EnvironmentPtr env)
 {
@@ -87,16 +89,16 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
             env->settings->getSetting<std::string>("Debug.Path", "Output"), prevIter->iterationNumber);
         Utilities::saveVariablePointVectorToFile(solution, variableNames, filename);
 
+        // Prepare the arguments
         jl_value_t* solutionPath = jl_cstr_to_string(filename.c_str());
         jl_value_t* directory = jl_cstr_to_string("");
-
-        // Prepare the arguments
         jl_value_t* argOrder = jl_box_int64(order); // order
         jl_value_t* argQuiet = jl_box_bool(outputQuiet); // quiet
+        jl_value_t* argSparse = jl_cstr_to_string(sparsity.c_str()); // sparsity
 
         // Create an array of arguments
-        jl_value_t* args[4] = { solutionPath, directory, argOrder, argQuiet };
-        jl_value_t* juliaCallResult = jl_call(funcSosHyp, args, 4);
+        jl_value_t* args[5] = { solutionPath, directory, argOrder, argQuiet, argSparse };
+        jl_value_t* juliaCallResult = jl_call(funcSosHyp, args, 5);
 
         if(jl_exception_occurred())
         {
@@ -113,9 +115,9 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
             jl_value_t* juliaTermCoeffs = jl_fieldref(juliaCallResult, 2); // Vector{Float64}
 
             // Extract objectiveValue
-            double objectiveValue = jl_unbox_float64(juliaObj);
-            env->output->outputDebug(fmt::format("        Objective value: {}", objectiveValue));
-
+            lastObjValue = jl_unbox_float64(juliaObj);
+            env->output->outputInfo(fmt::format("        Objective value: {}", lastObjValue));
+            
             // Convert variableIndexes to C++ vector<int64_t>
             /*jl_array_t* juliaArrayVarIndexes = (jl_array_t*)juliaVarIndexes;
             size_t numVarIndexes = jl_array_len(juliaArrayVarIndexes);
@@ -210,7 +212,7 @@ void initializeJulia(EnvironmentPtr env)
     jl_init();
 
     // Load the Julia file
-    jl_eval_string("include(\"//home//ubuntu//SHOT-soshyp//build//debug//soshyp//main.jl\")");
+    jl_eval_string("include(\"//home//ubuntu//SHOT-soshyp//ThirdParty//soshyp//main.jl\")");
     env->output->outputDebug("        Loading Julia module.");
     jl_eval_string("using .soshyp");
     env->output->outputDebug("        Julia module loaded.");
@@ -247,18 +249,15 @@ void initializeJulia(EnvironmentPtr env)
     problem << env->reformulatedProblem;
     Utilities::writeStringToFile(filename, problem.str());
 
+    // Prepare the arguments
     jl_value_t* problemPath = jl_cstr_to_string(filename.c_str());
     jl_value_t* directory = jl_cstr_to_string(""); // directory already included in filename
-
-    // Prepare the arguments
-    jl_value_t* argOrder = jl_box_int64(order); // order
     jl_value_t* argQuiet = jl_box_bool(outputQuiet); // quiet
-    jl_value_t* argAssign = jl_cstr_to_string(assign.c_str()); // assign
 
     // Create an array of arguments
-    jl_value_t* args[5] = { problemPath, directory, argOrder, argQuiet, argAssign};
+    jl_value_t* args[3] = { problemPath, directory, argQuiet};
     
-    jl_value_t* prepareProblemStatus = jl_call(funcPrepareProblem, args, 5);
+    jl_value_t* prepareProblemStatus = jl_call(funcPrepareProblem, args, 3);
 
     if(jl_exception_occurred())
     {
@@ -277,7 +276,7 @@ int main(int argc, const char* argv[])
     // Check if the correct number of arguments is provided
     if(argc <= 4)
     {
-        std::cerr << "Usage: " << argv[0] << " <problem_filename> <options_filename> <order=2,3,...> <quiet=true/false> <assign=all/cliques>"
+        std::cerr << "Usage: " << argv[0] << " <problem_filename> <output_directory> <options_filename> <order=2,3,...> [quiet=true/false] [sparsity=all/single/cliques]"
                   << std::endl;
         return 1;
     }
@@ -289,14 +288,25 @@ int main(int argc, const char* argv[])
 
     order = argv[4] ? std::stoi(argv[4]) : 2; // Default order is 2 if not provided, if order is 0 then run normal SHOT on problem
     outputQuiet = (argc >= 5 && std::string(argv[5]) == "true");
-    assign = (argc >= 6 && std::string(argv[6]) == "all") ? "all" : "cliques";
+    
+    // Parse sparsity argument: can be "all", "single", or "cliques" (default)
+    if (argc >= 6) {
+        std::string sparsityArg = argv[6];
+        if (sparsityArg == "all" || sparsityArg == "single" || sparsityArg == "cliques") {
+            sparsity = sparsityArg;
+        } else {
+            sparsity = "all"; // default fallback
+        }
+    } else {
+        sparsity = "all"; // default when no argument provided
+    }
 
     std::cout << " Output directory: " << outputDirectory << std::endl;
 
     if (order != 0)
     {
         std::cout << " Lasserre order is set to: " << order << std::endl;
-        std::cout << " Assign parameter set to: " << assign << std::endl;
+        std::cout << " Sparsity parameter set to: " << sparsity << std::endl;
     }
     else    
     {
@@ -351,9 +361,21 @@ int main(int argc, const char* argv[])
         solver->registerCallback(
             E_EventType::ExternalHyperplaneSelection, [&env](std::any args) { externalHyperplaneSelection(env, args); });
     
-    // Initialize the Julia environment
-    std::cout << " \n Initializing Julia environment..." << std::endl;
-    initializeJulia(env);
+
+
+        // Registers a callback that terminates if the Julia objective value is small enough
+        solver->registerCallback(E_EventType::UserTerminationCheck, [&env](std::any args) 
+        {
+            if (lastObjValue < 1e-6)
+            {
+                std::cout << "Callback activated. Terminating since objective value " << lastObjValue << " < 1e-6.\n";
+                env->tasks->terminate();
+            }
+        }
+    );
+        // Initialize the Julia environment
+        std::cout << " \n Initializing Julia environment..." << std::endl;
+        initializeJulia(env);
     }
     
     // Solve the problem
