@@ -12,6 +12,7 @@
 #include "../src/Settings.h"
 #include "../src/Solver.h"
 #include "../src/Structs.h"
+#include "../src/Timing.h"
 #include "../src/TaskHandler.h"
 #include "../src/Utilities.h"
 
@@ -22,6 +23,8 @@ using namespace SHOT;
 int itersWithoutAddedHPs = 0;
 int order = 2;
 bool outputQuiet = false;
+bool useTSSOS = false;
+double tolSOS = 1e-6;
 std::string sparsity = "all";
 VectorString variableNames;
 double lastObjValue = SHOT_DBL_MAX;
@@ -56,6 +59,9 @@ void printJuliaError(EnvironmentPtr env)
 // Callback function definition
 void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
 {
+    env->timing->startTimer("Lasserre total");
+    env->timing->startTimer("Lasserre external callback");
+
     try
     {
         if(env->results->getNumberOfIterations() == 1)
@@ -72,6 +78,8 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
         if(funcSosHyp == nullptr)
         {
             env->output->outputDebug("        Function sos_hyp not found!");
+            env->timing->stopTimer("Lasserre external callback");
+            env->timing->stopTimer("Lasserre total");
             return;
         }
 
@@ -79,6 +87,8 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
         {
             env->output->outputError(fmt::format("        Julia exception when defining sos_hyp function"));
             printJuliaError(env);
+            env->timing->stopTimer("Lasserre external callback");
+            env->timing->stopTimer("Lasserre total");
             return;
         }
 
@@ -95,10 +105,11 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
         jl_value_t* argOrder = jl_box_int64(order); // order
         jl_value_t* argQuiet = jl_box_bool(outputQuiet); // quiet
         jl_value_t* argSparse = jl_cstr_to_string(sparsity.c_str()); // sparsity
+        jl_value_t* argTol = jl_box_float64(tolSOS); // tolerance
 
         // Create an array of arguments
-        jl_value_t* args[5] = { solutionPath, directory, argOrder, argQuiet, argSparse };
-        jl_value_t* juliaCallResult = jl_call(funcSosHyp, args, 5);
+        jl_value_t* args[6] = { solutionPath, directory, argOrder, argQuiet, argSparse, argTol };
+        jl_value_t* juliaCallResult = jl_call(funcSosHyp, args, 6);
 
         if(jl_exception_occurred())
         {
@@ -113,10 +124,14 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
             jl_value_t* juliaObj = jl_fieldref(juliaCallResult, 0); // Float64
             jl_value_t* juliaVarIndexes = jl_fieldref(juliaCallResult, 1); // Vector{Int64}
             jl_value_t* juliaTermCoeffs = jl_fieldref(juliaCallResult, 2); // Vector{Float64}
+            jl_value_t* juliaCutTime = jl_fieldref(juliaCallResult, 3); // Float64
 
             // Extract objectiveValue
             lastObjValue = jl_unbox_float64(juliaObj);
             env->output->outputInfo(fmt::format("        Objective value: {}", lastObjValue));
+
+            double cutTime = jl_unbox_float64(juliaCutTime);
+            std::cout << "        Cumulative cut generation time (in Julia): " << cutTime << " seconds." << std::endl;
             
             // Convert variableIndexes to C++ vector<int64_t>
             /*jl_array_t* juliaArrayVarIndexes = (jl_array_t*)juliaVarIndexes;
@@ -205,11 +220,33 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
     catch(const std::bad_any_cast& e)
     {
     }
+
+    env->timing->stopTimer("Lasserre external callback");
+    env->timing->stopTimer("Lasserre total");
 }
 
 void initializeJulia(EnvironmentPtr env)
 {
-    jl_init();
+    // Initialize Julia with custom system image if available
+    const char* sysimage_path = "/home/ubuntu/SHOT-soshyp/ThirdParty/soshyp/soshyp_sysimage.so";
+    const char* init_script_path = "/home/ubuntu/SHOT-soshyp/ThirdParty/soshyp/init_julia.jl";
+    
+    // Check if system image exists
+    std::ifstream sysimage_file(sysimage_path);
+    if (sysimage_file.good()) {
+        env->output->outputDebug("        Using precompiled system image for faster startup.");
+        jl_init_with_image(nullptr, sysimage_path);
+    } else {
+        env->output->outputDebug("        System image not found, using standard Julia initialization.");
+        jl_init();
+        
+        // Check if initialization script exists and use it
+        std::ifstream init_file(init_script_path);
+        if (init_file.good()) {
+            env->output->outputDebug("        Loading Julia packages via initialization script.");
+            jl_eval_string("include(\"/home/ubuntu/SHOT-soshyp/ThirdParty/soshyp/init_julia.jl\")");
+        }
+    }
 
     // Load the Julia file
     jl_eval_string("include(\"//home//ubuntu//SHOT-soshyp//ThirdParty//soshyp//main.jl\")");
@@ -253,11 +290,14 @@ void initializeJulia(EnvironmentPtr env)
     jl_value_t* problemPath = jl_cstr_to_string(filename.c_str());
     jl_value_t* directory = jl_cstr_to_string(""); // directory already included in filename
     jl_value_t* argQuiet = jl_box_bool(outputQuiet); // quiet
+    jl_value_t* argUseTSSOS = jl_box_bool(useTSSOS); // use TSSOS
 
     // Create an array of arguments
-    jl_value_t* args[3] = { problemPath, directory, argQuiet};
-    
-    jl_value_t* prepareProblemStatus = jl_call(funcPrepareProblem, args, 3);
+    jl_value_t* args[4] = { problemPath, directory, argQuiet, argUseTSSOS};
+
+    jl_value_t* prepareProblemResult = jl_call(funcPrepareProblem, args, 4);
+    double prepareProblemTime = jl_unbox_float64(prepareProblemResult);
+    std::cout << " Julia prepare time " << prepareProblemTime << std::endl;
 
     if(jl_exception_occurred())
     {
@@ -286,11 +326,15 @@ int main(int argc, const char* argv[])
     std::string outputDirectory = argv[2];
     std::string optionsFilename = argv[3];
 
+    for (int i = 0; i < argc; i++) {
+        std::cout << "Argument " << i << ": " << argv[i] << std::endl;
+    }
+
     order = argv[4] ? std::stoi(argv[4]) : 2; // Default order is 2 if not provided, if order is 0 then run normal SHOT on problem
     outputQuiet = (argc >= 5 && std::string(argv[5]) == "true");
     
     // Parse sparsity argument: can be "all", "single", or "cliques" (default)
-    if (argc >= 6) {
+    if (argc > 6) {
         std::string sparsityArg = argv[6];
         if (sparsityArg == "all" || sparsityArg == "single" || sparsityArg == "cliques") {
             sparsity = sparsityArg;
@@ -301,12 +345,29 @@ int main(int argc, const char* argv[])
         sparsity = "all"; // default when no argument provided
     }
 
+        // Parse useTSSOS argument: true or false
+    if (argc > 7) {
+        useTSSOS = (std::string(argv[7]) == "true");
+    } else {
+        useTSSOS = false; // default when no argument provided
+    }
+
+    // Parse tolSOS argument: true or false
+    if (argc > 8) {
+        tolSOS = (std::stod(argv[8]) > 0) ? std::stod(argv[8]) : 1e-6;
+    } else {
+
+        tolSOS = 1e-6; // default when no argument provided
+    }
+
     std::cout << " Output directory: " << outputDirectory << std::endl;
 
     if (order != 0)
     {
         std::cout << " Lasserre order is set to: " << order << std::endl;
         std::cout << " Sparsity parameter set to: " << sparsity << std::endl;
+        std::cout << " Use TSSOS set to: " << (useTSSOS ? "true" : "false") << std::endl;
+        std::cout << " Tolerance for SOS constraints set to: " << tolSOS << std::endl;
     }
     else    
     {
@@ -317,6 +378,9 @@ int main(int argc, const char* argv[])
     // Create a Solver instance
     std::unique_ptr<Solver> solver = std::make_unique<Solver>();
     auto env = solver->getEnvironment();
+
+    env->timing->createTimer("Lasserre total", "Total extra time from Lasserre hierarchy usage");
+    env->timing->createTimer("Julia initialize", "Total extra time from Julia initialization");
 
     env->report->outputSolverHeader();
 
@@ -335,6 +399,9 @@ int main(int argc, const char* argv[])
         solver->updateSetting("HyperplaneCuts.Delay", "Dual", false);
         solver->updateSetting("Convexity.AssumeConvex", "Model", true);
     }
+
+    solver->updateSetting("IterationLimit", "Termination", 1000);
+    solver->updateSetting("TimeLimit", "Termination", 200.0);
     
     solver->updateSetting("MIP.Solver", "Dual", static_cast<int>(ES_MIPSolver::Cbc));
 
@@ -375,7 +442,11 @@ int main(int argc, const char* argv[])
     );
         // Initialize the Julia environment
         std::cout << " \n Initializing Julia environment..." << std::endl;
+        env->timing->startTimer("Lasserre total");
+        env->timing->startTimer("Julia initialize");
         initializeJulia(env);
+        env->timing->stopTimer("Julia initialize");
+        env->timing->stopTimer("Lasserre total");
     }
     
     // Solve the problem
