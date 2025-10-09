@@ -131,8 +131,9 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
             env->output->outputInfo(fmt::format("        Objective value: {}", lastObjValue));
 
             double cutTime = jl_unbox_float64(juliaCutTime);
-            std::cout << "        Cumulative cut generation time (in Julia): " << cutTime << " seconds." << std::endl;
-            
+
+            env->output->outputInfo(fmt::format("Cumulative cut generation time (in Julia): {} seconds", cutTime));
+               
             // Convert variableIndexes to C++ vector<int64_t>
             /*jl_array_t* juliaArrayVarIndexes = (jl_array_t*)juliaVarIndexes;
             size_t numVarIndexes = jl_array_len(juliaArrayVarIndexes);
@@ -278,7 +279,8 @@ void initializeJulia(EnvironmentPtr env)
 
     jl_value_t* prepareProblemResult = jl_call(funcPrepareProblem, args, 4);
     double prepareProblemTime = jl_unbox_float64(prepareProblemResult);
-    std::cout << " Julia prepare time " << prepareProblemTime << std::endl;
+    
+    env->output->outputInfo(fmt::format("Julia prepare time: {} seconds", prepareProblemTime));
 
     if(jl_exception_occurred())
     {
@@ -302,13 +304,17 @@ int main(int argc, const char* argv[])
         return 1;
     }
 
+    // Create a Solver instance
+    std::unique_ptr<Solver> solver = std::make_unique<Solver>();
+    auto env = solver->getEnvironment();
+
     // Extract arguments
     std::string problemFilename = argv[1];
     std::string outputDirectory = argv[2];
     std::string optionsFilename = argv[3];
 
     for (int i = 0; i < argc; i++) {
-        std::cout << "Argument " << i << ": " << argv[i] << std::endl;
+        env->output->outputInfo(fmt::format("Argument {}: {}", i, argv[i]));
     }
 
     order = argv[4] ? std::stoi(argv[4]) : 2; // Default order is 2 if not provided, if order is 0 then run normal SHOT on problem
@@ -341,24 +347,20 @@ int main(int argc, const char* argv[])
         tolSOS = 1e-6; // default when no argument provided
     }
 
-    std::cout << " Output directory: " << outputDirectory << std::endl;
+    env->output->outputInfo(" Output directory: " + outputDirectory);
 
     if (order != 0)
     {
-        std::cout << " Lasserre order is set to: " << order << std::endl;
-        std::cout << " Sparsity parameter set to: " << sparsity << std::endl;
-        std::cout << " Use TSSOS set to: " << (useTSSOS ? "true" : "false") << std::endl;
-        std::cout << " Tolerance for SOS constraints set to: " << tolSOS << std::endl;
+        env->output->outputInfo(" Output directory: " + outputDirectory);
+        env->output->outputInfo(fmt::format(" Lasserre order is set to: {}", order));
+        env->output->outputInfo(fmt::format(" Sparsity parameter set to: {}", sparsity));
+        env->output->outputInfo(fmt::format(" Use TSSOS set to: {}", (useTSSOS ? "true" : "false")));
+        env->output->outputInfo(fmt::format(" Tolerance for SOS constraints set to: {}", tolSOS));
     }
     else    
     {
-        std::cout << " Using regular SHOT nonconvex strategy. " << order << std::endl;
+        env->output->outputInfo(fmt::format(" Using regular SHOT nonconvex strategy. {}", order));
     }
-
-
-    // Create a Solver instance
-    std::unique_ptr<Solver> solver = std::make_unique<Solver>();
-    auto env = solver->getEnvironment();
 
     env->timing->createTimer("Lasserre total", "Total extra time from Lasserre hierarchy usage");
     env->timing->createTimer("Julia initialize", "Total extra time from Julia initialization");
@@ -416,13 +418,15 @@ int main(int argc, const char* argv[])
         {
             if (lastObjValue < tolSOS)
             {
-                std::cout << "Callback activated. Terminating since objective value " << lastObjValue << " < 1e-6.\n";
+
+                env->output->outputInfo(fmt::format("Callback activated. Terminating since objective value {} < 1e-6.", lastObjValue));
                 env->tasks->terminate();
             }
         }
     );
         // Initialize the Julia environment
-        std::cout << " \n Initializing Julia environment..." << std::endl;
+
+        env->output->outputInfo(" Initializing Julia environment...");
         env->timing->startTimer("Lasserre total");
         env->timing->startTimer("Julia initialize");
         initializeJulia(env);
@@ -433,7 +437,7 @@ int main(int argc, const char* argv[])
     // Solve the problem
     if(!solver->solveProblem())
     {
-        std::cerr << "Error: Problem solving failed." << std::endl;
+        env->output->outputError("Error: Problem solving failed.");
         return 1;
     }
 
@@ -446,12 +450,12 @@ int main(int argc, const char* argv[])
 
     if(!Utilities::writeStringToFile(osrlFilename, osrl))
     {
-        std::cerr << "Error: Unable to write OSRL file to: " << osrlFilename << std::endl;
+        env->output->outputError("Error: Unable to write OSRL file to: " + osrlFilename);
         return 1;
     }
     else
     {
-        std::cout << "OSRL results written to: " << osrlFilename << std::endl;
+        env->output->outputInfo("OSRL results written to: " + osrlFilename);
     }
 
         // Write trace file
@@ -460,12 +464,12 @@ int main(int argc, const char* argv[])
 
     if(!Utilities::writeStringToFile(trcFilename, trc))
     {
-        std::cerr << "Error: Unable to write trace file to: " << trcFilename << std::endl;
+        env->output->outputError("Error: Unable to write trace file to: " + trcFilename);
         return 1;
     }
     else
     {
-        std::cout << "Trace results written to: " << trcFilename << std::endl;
+        env->output->outputInfo("Trace results written to: " + trcFilename);
     }
 
     return 0;
