@@ -227,26 +227,7 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
 
 void initializeJulia(EnvironmentPtr env)
 {
-    // Initialize Julia with custom system image if available
-    const char* sysimage_path = "/home/ubuntu/SHOT-soshyp/ThirdParty/soshyp/soshyp_sysimage.so";
-    const char* init_script_path = "/home/ubuntu/SHOT-soshyp/ThirdParty/soshyp/init_julia.jl";
-    
-    // Check if system image exists
-    std::ifstream sysimage_file(sysimage_path);
-    if (sysimage_file.good()) {
-        env->output->outputDebug("        Using precompiled system image for faster startup.");
-        jl_init_with_image(nullptr, sysimage_path);
-    } else {
-        env->output->outputDebug("        System image not found, using standard Julia initialization.");
-        jl_init();
-        
-        // Check if initialization script exists and use it
-        std::ifstream init_file(init_script_path);
-        if (init_file.good()) {
-            env->output->outputDebug("        Loading Julia packages via initialization script.");
-            jl_eval_string("include(\"/home/ubuntu/SHOT-soshyp/ThirdParty/soshyp/init_julia.jl\")");
-        }
-    }
+    jl_init();
 
     // Load the Julia file
     jl_eval_string("include(\"//home//ubuntu//SHOT-soshyp//ThirdParty//soshyp//main.jl\")");
@@ -316,7 +297,7 @@ int main(int argc, const char* argv[])
     // Check if the correct number of arguments is provided
     if(argc <= 4)
     {
-        std::cerr << "Usage: " << argv[0] << " <problem_filename> <output_directory> <options_filename> <order=2,3,...> [quiet=true/false] [sparsity=all/single/cliques]"
+        std::cerr << "Usage: " << argv[0] << " <problem_filename> <output_directory> <options_filename> <order=2,3,...> [quiet=true/false] [sparsity=all/single/cliques] [useTSSOS=true/false] [tolSOS=1e-6]"
                   << std::endl;
         return 1;
     }
