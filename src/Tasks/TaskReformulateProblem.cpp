@@ -781,7 +781,7 @@ void TaskReformulateProblem::createEpigraphConstraint()
 
     auto objectiveVariable = std::make_shared<AuxiliaryVariable>(
         "shot_objvar", auxVariableCounter, E_VariableType::Real, objectiveBound.l(), objectiveBound.u());
-    auxVariableCounter++;
+    
     objectiveVariable->properties.auxiliaryType = E_AuxiliaryVariableType::NonlinearObjectiveFunction;
     env->results->increaseAuxiliaryVariableCounter(E_AuxiliaryVariableType::NonlinearObjectiveFunction);
 
@@ -901,6 +901,7 @@ void TaskReformulateProblem::createEpigraphConstraint()
     }
 
     objectiveVariable->index = auxVariableCounter;
+    auxVariableCounter++;
     reformulatedProblem->add(std::move(objective));
 }
 
