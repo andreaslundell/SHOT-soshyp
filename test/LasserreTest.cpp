@@ -414,7 +414,7 @@ int main(int argc, const char* argv[])
         // Registers a callback that terminates if the Julia objective value is small enough
         solver->registerCallback(E_EventType::UserTerminationCheck, [&env](std::any args) 
         {
-            if (lastObjValue < 1e-6)
+            if (lastObjValue < tolSOS)
             {
                 std::cout << "Callback activated. Terminating since objective value " << lastObjValue << " < 1e-6.\n";
                 env->tasks->terminate();
