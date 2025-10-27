@@ -54,7 +54,7 @@ def main():
             # sparsity = row["sparsity"]
             # useTSSOS = row["useTSSOS"]
             # tolSOS = row["tolSOS"]
-            quiet = "true"
+            quiet = "false"
             useTSSOS = "false"
             tolSOS = "1e-6"
             for order in ["2","3"]:
@@ -91,8 +91,8 @@ def main():
                     except subprocess.CalledProcessError as e:
                         print(f"Error while running {cmd}: {e}")
     
-    # output_values_dict = {'time':['Total', 'Julia initialize', 'Lasserre total','CallbackExternalHyperplaneGeneration'], 'other':['DualObjectiveBound'] }
-    # print_sol(output_dir,output_values_dict)
+    output_values_dict = {'time':['Total', 'Julia initialize', 'Lasserre total','CallbackExternalHyperplaneGeneration'], 'other':['DualObjectiveBound'] }
+    print_sol(output_dir,output_values_dict)
 
 def print_sol(output_dir, output_values_dict):
     # Ensure output_dir exists
