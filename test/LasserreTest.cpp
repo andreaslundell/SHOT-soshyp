@@ -263,7 +263,7 @@ void initializeJulia(EnvironmentPtr env)
 
     // Write the reformulated problem to a file
     auto filename
-        = fmt::format("{0}/lassarre_problem.txt", env->settings->getSetting<std::string>("Debug.Path", "Output"));
+        = fmt::format("{0}/lasserre_problem.txt", env->settings->getSetting<std::string>("Debug.Path", "Output"));
     std::stringstream problem;
     problem << env->reformulatedProblem;
     Utilities::writeStringToFile(filename, problem.str());
