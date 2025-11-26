@@ -1263,9 +1263,6 @@ void MIPSolverCplex::addMIPStart(VectorDouble point)
 
     auto startVars = IloNumVarArray(cplexEnv);
 
-    if(this->hasDualAuxiliaryObjectiveVariable())
-        startVal.add(env->reformulatedProblem->objectiveFunction->calculateValue(point));
-
     // Not all variables in cplexVars need to be in the MIP start (e.g. variables from integer cuts)
     for(int i = 0; i < startVal.getSize(); i++)
         startVars.add(cplexVars[i]);
