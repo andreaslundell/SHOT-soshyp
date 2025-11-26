@@ -786,10 +786,6 @@ void TaskReformulateProblem::createEpigraphConstraint()
     objectiveVariable->properties.auxiliaryType = E_AuxiliaryVariableType::NonlinearObjectiveFunction;
     env->results->increaseAuxiliaryVariableCounter(E_AuxiliaryVariableType::NonlinearObjectiveFunction);
 
-    objectiveVariable->index = auxVariableCounter;
-    auxVariableCounter++;
-    reformulatedProblem->add(objectiveVariable);
-
     if(env->problem->objectiveFunction->properties.hasLinearTerms)
     {
         for(auto& T : std::dynamic_pointer_cast<LinearObjectiveFunction>(env->problem->objectiveFunction)->linearTerms)
@@ -903,6 +899,10 @@ void TaskReformulateProblem::createEpigraphConstraint()
     {
         reformulatedProblem->add(std::move(RC));
     }
+
+    objectiveVariable->index = auxVariableCounter;
+    auxVariableCounter++;
+    reformulatedProblem->add(objectiveVariable);
 
     reformulatedProblem->add(std::move(objective));
 }
