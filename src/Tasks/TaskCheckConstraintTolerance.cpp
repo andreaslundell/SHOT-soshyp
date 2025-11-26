@@ -45,20 +45,13 @@ void TaskCheckConstraintTolerance::run()
         = std::abs(env->problem->objectiveFunction->calculateValue(currIter->solutionPoints.at(0).point)
             - currIter->objectiveValue);
 
-    // Checks it the nonlinear objective is fulfilled
-    if(env->problem->objectiveFunction->properties.classification > E_ObjectiveFunctionClassification::Quadratic
-        && objectiveValueDifference > constraintTolerance)
+    // Checks it the nonlinear objective is fulfilled, needs to check also linear and quadratic cases in case of epigraph formulation
+    if(objectiveValueDifference > constraintTolerance)
     {
         env->output->outputDebug(
             fmt::format("        Nonlinear objective termination tolerance not fulfilled. Deviation {} > {}.",
                 objectiveValueDifference, constraintTolerance));
         return;
-    }
-    else
-    {
-        env->output->outputDebug(
-            fmt::format("        Nonlinear objective termination tolerance fulfilled. Deviation {} <= {}.",
-                objectiveValueDifference, constraintTolerance));
     }
 
     // Checks if the quadratic constraints are fulfilled to tolerance
