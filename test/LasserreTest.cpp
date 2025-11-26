@@ -131,6 +131,9 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
             env->output->outputInfo(fmt::format("        Objective value: {}", lastObjValue));
 
             double cutTime = jl_unbox_float64(juliaCutTime);
+            
+            // Set the Julia cut generation timer value from the returned cumulative time
+            env->timing->setTimerValue("Julia cut generation", cutTime);
 
             env->output->outputInfo(fmt::format("Cumulative cut generation time (in Julia): {} seconds", cutTime));
                
@@ -280,6 +283,9 @@ void initializeJulia(EnvironmentPtr env)
     jl_value_t* prepareProblemResult = jl_call(funcPrepareProblem, args, 4);
     double prepareProblemTime = jl_unbox_float64(prepareProblemResult);
     
+    // Set the Julia prepare timer value from the returned time
+    env->timing->setTimerValue("Julia prepare", prepareProblemTime);
+    
     env->output->outputInfo(fmt::format("Julia prepare time: {} seconds", prepareProblemTime));
 
     if(jl_exception_occurred())
@@ -364,6 +370,9 @@ int main(int argc, const char* argv[])
 
     env->timing->createTimer("Lasserre total", "Total extra time from Lasserre hierarchy usage");
     env->timing->createTimer("Julia initialize", "Total extra time from Julia initialization");
+    env->timing->createTimer("Julia prepare", "Time spent in Julia prepare_problem function");
+    env->timing->createTimer("Lasserre external callback", "Time spent in external hyperplane callback");
+    env->timing->createTimer("Julia cut generation", "Time spent in Julia sos_hyp cut generation");
 
     env->report->outputSolverHeader();
 
