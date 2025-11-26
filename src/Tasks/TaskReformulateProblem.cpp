@@ -778,12 +778,17 @@ void TaskReformulateProblem::createEpigraphConstraint()
     {
         objectiveBound = Interval(-objVarBound, objVarBound);
     }
-
+    
     auto objectiveVariable = std::make_shared<AuxiliaryVariable>(
         "shot_objvar", auxVariableCounter, E_VariableType::Real, objectiveBound.l(), objectiveBound.u());
-    
+   
+
     objectiveVariable->properties.auxiliaryType = E_AuxiliaryVariableType::NonlinearObjectiveFunction;
     env->results->increaseAuxiliaryVariableCounter(E_AuxiliaryVariableType::NonlinearObjectiveFunction);
+
+    objectiveVariable->index = auxVariableCounter;
+    auxVariableCounter++;
+    reformulatedProblem->add(objectiveVariable);
 
     if(env->problem->objectiveFunction->properties.hasLinearTerms)
     {
@@ -891,7 +896,6 @@ void TaskReformulateProblem::createEpigraphConstraint()
         }
     }
 
-    reformulatedProblem->add(objectiveVariable);
     constraint->add(std::make_shared<LinearTerm>(-1.0, std::dynamic_pointer_cast<Variable>(objectiveVariable)));
     auto reformulatedConstraints = reformulateConstraint(constraint);
 
@@ -900,8 +904,6 @@ void TaskReformulateProblem::createEpigraphConstraint()
         reformulatedProblem->add(std::move(RC));
     }
 
-    objectiveVariable->index = auxVariableCounter;
-    auxVariableCounter++;
     reformulatedProblem->add(std::move(objective));
 }
 
