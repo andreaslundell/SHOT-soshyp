@@ -392,8 +392,8 @@ int main(int argc, const char* argv[])
         solver->updateSetting("Convexity.AssumeConvex", "Model", true);
     }
 
-    solver->updateSetting("IterationLimit", "Termination", 1000);
-    solver->updateSetting("TimeLimit", "Termination", 200.0);
+    //solver->updateSetting("IterationLimit", "Termination", 1000);
+    //solver->updateSetting("TimeLimit", "Termination", 200.0);
     
     solver->updateSetting("MIP.Solver", "Dual", static_cast<int>(ES_MIPSolver::Cbc));
 
