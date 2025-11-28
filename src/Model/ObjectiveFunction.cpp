@@ -250,7 +250,7 @@ double LinearObjectiveFunction::calculateValue(const VectorDouble& point)
 
 Interval LinearObjectiveFunction::calculateValue(const IntervalVector& intervalVector)
 {
-    Interval value = linearTerms.calculate(intervalVector);
+    Interval value = constant + linearTerms.calculate(intervalVector);
     return value;
 }
 
