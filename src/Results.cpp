@@ -273,6 +273,31 @@ std::string Results::getResultsOSrL()
     otherNode->SetText(env->settings->getSettingsAsString(false, true).c_str());
     otherResultsNode->InsertFirstChild(otherNode);
 
+    if (iterations.size() > 0)
+    {
+        otherNode = osrlDocument.NewElement("other");
+        otherNode->SetAttribute("name", "InitialDualObjectiveBound");
+
+        if (env->problem->objectiveFunction->properties.isMinimize)
+            otherNode->SetAttribute("value", iterations.at(0)->currentObjectiveBounds.first);
+        else
+            otherNode->SetAttribute("value", iterations.at(0)->currentObjectiveBounds.second);
+
+        otherNode->SetAttribute("description", "The initial dual bound for the objective after first iteration");
+        otherResultsNode->InsertEndChild(otherNode);
+
+        otherNode = osrlDocument.NewElement("other");
+        otherNode->SetAttribute("name", "InitialPrimalObjectiveBound");
+
+        if (env->problem->objectiveFunction->properties.isMinimize)
+            otherNode->SetAttribute("value", iterations.at(0)->currentObjectiveBounds.second);
+        else
+            otherNode->SetAttribute("value", iterations.at(0)->currentObjectiveBounds.first);
+
+        otherNode->SetAttribute("description", "The initial primal bound for the objective after first iteration");
+        otherResultsNode->InsertEndChild(otherNode);
+    }
+
     otherNode = osrlDocument.NewElement("other");
     otherNode->SetAttribute("name", "DualObjectiveBound");
     otherNode->SetAttribute("value", globalDualBound);
@@ -1092,6 +1117,14 @@ double Results::getPrimalBound()
 void Results::setPrimalBound(double value)
 {
     this->currentPrimalBound = value;
+    
+    if (env->results->getNumberOfIterations() > 0)
+    {
+        if(env->problem->objectiveFunction->direction == E_ObjectiveFunctionDirection::Minimize)
+            env->results->getCurrentIteration()->currentObjectiveBounds.second = value;
+        else
+            env->results->getCurrentIteration()->currentObjectiveBounds.first = value;
+    }
 
     // In case we have crossover
     if(env->problem->objectiveFunction->direction == E_ObjectiveFunctionDirection::Minimize)

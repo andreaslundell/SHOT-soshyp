@@ -236,6 +236,17 @@ void TaskSolveIteration::run()
         env->output->outputDebug("        Dual solver reports no solutions found.");
     }
 
+    if(env->problem->objectiveFunction->direction == E_ObjectiveFunctionDirection::Minimize)
+    {
+        currIter->currentObjectiveBounds.first = env->results->getCurrentDualBound();
+        currIter->currentObjectiveBounds.second = env->results->getPrimalBound();
+    }
+    else
+    {
+        currIter->currentObjectiveBounds.first = env->results->getPrimalBound();
+        currIter->currentObjectiveBounds.second = env->results->getCurrentDualBound();
+    }
+    
     currIter->usedMIPSolutionLimit = env->dualSolver->MIPSolver->getSolutionLimit();
 
     // Update solution stats

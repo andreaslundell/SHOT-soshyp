@@ -9,6 +9,8 @@
 */
 
 #include "Iteration.h"
+#include "ObjectiveFunction.h"
+#include "Problem.h"
 #include "Results.h"
 #include "Settings.h"
 
@@ -37,8 +39,16 @@ Iteration::Iteration(EnvironmentPtr envPtr)
     this->MIPSolutionLimitUpdated = false;
     this->solutionStatus = E_ProblemSolutionStatus::None;
 
-    currentObjectiveBounds.first = env->results->getCurrentDualBound();
-    currentObjectiveBounds.second = env->results->getPrimalBound();
+    if (env->problem->objectiveFunction->properties.isMinimize)
+    {
+        currentObjectiveBounds.first = env->results->getCurrentDualBound();
+        currentObjectiveBounds.second = env->results->getPrimalBound();
+    }
+    else
+    {
+        currentObjectiveBounds.first = env->results->getPrimalBound();
+        currentObjectiveBounds.second = env->results->getCurrentDualBound();
+    }
 }
 
 Iteration::~Iteration()

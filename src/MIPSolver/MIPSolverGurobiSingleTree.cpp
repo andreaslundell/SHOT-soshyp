@@ -409,8 +409,16 @@ void GurobiCallbackSingleTree::callback()
             env->solutionStatistics.numberOfExploredNodes = lastExploredNodes;
             currIter->numberOfOpenNodes = lastOpenNodes;
 
-            auto bounds = std::make_pair(env->results->getCurrentDualBound(), env->results->getPrimalBound());
-            currIter->currentObjectiveBounds = bounds;
+            if (env->problem->objectiveFunction->properties.isMinimize)
+            {
+                auto bounds = std::make_pair(env->results->getCurrentDualBound(), env->results->getPrimalBound());
+                currIter->currentObjectiveBounds = bounds;
+            }
+            else
+            {
+                auto bounds = std::make_pair(env->results->getPrimalBound(), env->results->getCurrentDualBound());
+                currIter->currentObjectiveBounds = bounds;
+            }
 
             if(env->settings->getSetting<bool>("Rootsearch.Use", "Primal")
                 && env->reformulatedProblem->properties.numberOfNonlinearConstraints > 0)

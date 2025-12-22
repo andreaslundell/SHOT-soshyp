@@ -388,8 +388,16 @@ void CtCallbackI::main()
     env->solutionStatistics.numberOfExploredNodes
         = std::max((int)this->getNnodes(), env->solutionStatistics.numberOfExploredNodes);
 
-    auto bounds = std::make_pair(env->results->getCurrentDualBound(), env->results->getPrimalBound());
-    currIter->currentObjectiveBounds = bounds;
+    if (env->problem->objectiveFunction->properties.isMinimize)
+    {
+        auto bounds = std::make_pair(env->results->getCurrentDualBound(), env->results->getPrimalBound());
+        currIter->currentObjectiveBounds = bounds;
+    }
+    else
+    {
+        auto bounds = std::make_pair(env->results->getPrimalBound(), env->results->getCurrentDualBound());
+        currIter->currentObjectiveBounds = bounds;
+    }
 
     printIterationReport(candidatePoints.at(0), threadId);
 
