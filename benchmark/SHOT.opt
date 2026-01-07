@@ -609,4 +609,4 @@ Termination.ObjectiveGap.Relative = 0.001
 Termination.PrimalStagnation.IterationLimit = 50
 
 * Time limit (s) for solver. 
-Termination.TimeLimit = 1.7976931348623157e+308
+Termination.TimeLimit = 1000

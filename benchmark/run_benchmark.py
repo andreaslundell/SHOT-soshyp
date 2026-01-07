@@ -58,7 +58,7 @@ def main():
             useTSSOS = "false"
             tolSOS = "1e-6"
             for order in ["2","3"]:
-                for sparsity in ["all","cliques","single"]:
+                for sparsity in ["single"]:
 
                     # Build subdirectory name
                     subfolder_name = f"{safe_name(problem_file)}-{order}_{sparsity}"
@@ -91,7 +91,7 @@ def main():
                     except subprocess.CalledProcessError as e:
                         print(f"Error while running {cmd}: {e}")
     
-    output_values_dict = {'time':['Total', 'Julia initialize', 'Lasserre total','CallbackExternalHyperplaneGeneration'], 'other':['DualObjectiveBound'] }
+    output_values_dict = {'time':['Total', 'Julia initialize','Julia prepare', 'Lasserre total','CallbackExternalHyperplaneGeneration'], 'other':['DualObjectiveBound'] }
     print_sol(output_dir,output_values_dict)
 
 def print_sol(output_dir, output_values_dict):

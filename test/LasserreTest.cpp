@@ -59,6 +59,7 @@ void printJuliaError(EnvironmentPtr env)
 // Callback function definition
 void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
 {
+    std::cout << "1" << std::endl;
     env->timing->startTimer("Lasserre total");
     env->timing->startTimer("Lasserre external callback");
 
@@ -67,14 +68,17 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
         if(env->results->getNumberOfIterations() == 1)
             return;
 
+    std::cout << "2" << std::endl;
         auto prevIter = env->results->getPreviousIteration();
 
+    std::cout << "3" << std::endl;
         if(prevIter->solutionPoints.size() == 0)
             return;
 
         jl_module_t* module = (jl_module_t*)jl_eval_string("soshyp");
         jl_function_t* funcSosHyp = jl_get_function(module, "sos_hyp");
 
+    std::cout << "4" << std::endl;
         if(funcSosHyp == nullptr)
         {
             env->output->outputDebug("        Function sos_hyp not found!");
@@ -83,6 +87,7 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
             return;
         }
 
+    std::cout << "5" << std::endl;
         if(jl_exception_occurred())
         {
             env->output->outputError(fmt::format("        Julia exception when defining sos_hyp function"));
@@ -92,12 +97,15 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
             return;
         }
 
+    std::cout << "6" << std::endl;
         auto solution = prevIter->solutionPoints.at(0).point;
         // Utilities::displayVector(solution);
 
         auto filename = fmt::format("{0}/lasserre_solpt_{1}.txt",
             env->settings->getSetting<std::string>("Debug.Path", "Output"), prevIter->iterationNumber);
         Utilities::saveVariablePointVectorToFile(solution, variableNames, filename);
+
+        std::cout << "6a" << std::endl;
 
         // Prepare the arguments
         jl_value_t* solutionPath = jl_cstr_to_string(filename.c_str());
@@ -107,9 +115,16 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
         jl_value_t* argSparse = jl_cstr_to_string(sparsity.c_str()); // sparsity
         jl_value_t* argTol = jl_box_float64(tolSOS); // tolerance
 
+        std::cout << "6b" << std::endl;
+
         // Create an array of arguments
         jl_value_t* args[6] = { solutionPath, directory, argOrder, argQuiet, argSparse, argTol };
+
+        std::cout << "6c" << std::endl;
+
         jl_value_t* juliaCallResult = jl_call(funcSosHyp, args, 6);
+
+        std::cout << "6d" << std::endl;
 
         if(jl_exception_occurred())
         {
@@ -119,6 +134,8 @@ void externalHyperplaneSelection(EnvironmentPtr env, std::any args)
             exit(1);
         }
 
+        std::cout << "7" << std::endl;
+        
         if(jl_is_tuple(juliaCallResult))
         {
             jl_value_t* juliaObj = jl_fieldref(juliaCallResult, 0); // Float64
