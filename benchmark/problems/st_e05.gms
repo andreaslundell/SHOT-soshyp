@@ -2,7 +2,7 @@ $offlisting
 *  
 *  Equation counts
 *      Total        E        G        L        N        X        C        B
-*          5        5        0        0        0        0        0        0
+*          4        4        0        0        0        0        0        0
 *  
 *  Variable counts
 *                   x        b        i      s1s      s2s       sc       si
@@ -12,34 +12,32 @@ $offlisting
 *  
 *  Nonzero counts
 *      Total    const       NL      DLL
-*         17        7       10        0
+*         11        7        4        0
 *
 *  Solve m using NLP minimizing objvar;
 
 
-Variables  objvar,x2,x3,x4,x5,x6;
+Variables  x1,x2,x3,x4,x5,objvar;
 
-Equations  e1,e2,e3,e4,e5;
+Positive Variables  x1,x2,x3;
+
+Equations  e1,e2,e3,e4;
 
 
-e1.. -(log(x2)*x2 + log(x3)*x3 - log(x4 - x6) + x4 - log(1 + x6/x4)*x5/x6 + 
-     0.362259780811985*x2 + 3.27527428318836*x3) + objvar =E= -1;
+e1.. 100000*x4 - 120*x1*(300 - x4) =E= 10000000;
 
-e2.. POWER(x4,3) - sqr(x4) + (-sqr(x6) - x6 + x5)*x4 - x5*x6 =E= 0;
+e2.. 100000*x5 - 80*x2*(400 - x5) - 100000*x4 =E= 0;
 
-e3.. -(0.352565*x2*x2 + 0.844083*x2*x3 + 0.844083*x3*x2 + 2.14335*x3*x3) + x5
-      =E= 0;
+e3..  - 4000*x3 - 100000*x5 =E= -50000000;
 
-e4..  - 0.12932*x2 - 0.271567*x3 + x6 =E= 0;
+e4..  - x1 - x2 - x3 + objvar =E= 0;
 
-e5..    x2 + x3 =E= 1;
-
-* set non-default levels
-x2.l = 0.5;
-x3.l = 0.5;
-x4.l = 2;
-x5.l = 1;
-x6.l = 1;
+* set non-default bounds
+x1.up = 15834;
+x2.up = 36250;
+x3.up = 10000;
+x4.lo = 100; x4.up = 300;
+x5.lo = 100; x5.up = 400;
 
 Model m / all /;
 

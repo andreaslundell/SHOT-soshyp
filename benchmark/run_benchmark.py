@@ -54,10 +54,10 @@ def main():
             # sparsity = row["sparsity"]
             # useTSSOS = row["useTSSOS"]
             # tolSOS = row["tolSOS"]
-            quiet = "false"
+            quiet = "true"
             useTSSOS = "false"
             tolSOS = "1e-6"
-            for order in ["2","3"]:
+            for order in ["2"]:
                 for sparsity in ["single"]:
 
                     # Build subdirectory name
@@ -90,8 +90,11 @@ def main():
                         subprocess.run(cmd, check=True)
                     except subprocess.CalledProcessError as e:
                         print(f"Error while running {cmd}: {e}")
-    
-    output_values_dict = {'time':['Total', 'Julia initialize','Julia prepare', 'Lasserre total','CallbackExternalHyperplaneGeneration'], 'other':['DualObjectiveBound'] }
+                    except Exception as e:
+                        print(f"Unexpected error while running {cmd}: {e}")
+                    continue
+        
+    output_values_dict = {'time':['Total', 'Julia initialize','Julia prepare', 'Lasserre total','CallbackExternalHyperplaneGeneration'], 'other':['InitialDualObjectiveBound','DualObjectiveBound'] }
     print_sol(output_dir,output_values_dict)
 
 def print_sol(output_dir, output_values_dict):

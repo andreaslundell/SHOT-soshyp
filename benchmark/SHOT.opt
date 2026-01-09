@@ -594,7 +594,7 @@ Termination.DualStagnation.ConstraintTolerance = 1e-06
 Termination.DualStagnation.IterationLimit = 10000
 
 * Iteration limit for main strategy. 
-Termination.IterationLimit = 1000000
+Termination.IterationLimit = 10000
 
 * Termination tolerance for the nonlinear objective constraint. 
 Termination.ObjectiveConstraintTolerance = 1e-08
