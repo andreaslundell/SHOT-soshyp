@@ -43,6 +43,8 @@ void TaskSelectHyperplanesExternal::run(std::vector<SolutionPoint> solutionPoint
 
     env->events->notify(E_EventType::ExternalHyperplaneSelection, solutionPoints);
 
+    env->output->outputDebug("        Finished selecting cutting planes using external callback functionality:");
+
     /*
     if(env->reformulatedProblem->properties.numberOfNonlinearConstraints == 0)
         return;
