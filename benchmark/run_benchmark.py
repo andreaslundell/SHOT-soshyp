@@ -57,8 +57,8 @@ def main():
             quiet = "true"
             useTSSOS = "false"
             tolSOS = "1e-6"
-            for order in ["2"]:
-                for sparsity in ["single"]:
+            for order in ["2","3"]:
+                for sparsity in ["single","cliques"]:
 
                     # Build subdirectory name
                     subfolder_name = f"{safe_name(problem_file)}-{order}_{sparsity}"
